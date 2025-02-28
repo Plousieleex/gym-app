@@ -1,8 +1,11 @@
-const { registerUser } = require('../services/userService');
+const prisma = require('../config/db');
+const { createUser } = require('../services/userService');
+const handleAsync = require('../utils/handleAsync');
 
-exports.registerUserController = async (req, res) => {
+// CREATE USER
+exports.createUserController = handleAsync(async (req, res, next) => {
   try {
-    const user = await registerUser(req.body);
+    const user = await createUser(req.body);
     res.status(201).json({
       status: 'success',
       data: user,
@@ -13,4 +16,7 @@ exports.registerUserController = async (req, res) => {
       message: err.message,
     });
   }
-};
+});
+
+// CREATE USER PROFILE
+exports.createUserProfileController = handleAsync(async (req, res, next) => {});
