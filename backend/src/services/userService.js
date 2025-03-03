@@ -3,13 +3,15 @@ const {
   createUser,
   getUserByEmail,
   getUserByUsername,
+  getUserById,
 } = require('../models/userModel');
+const AppError = require('../utils/appError');
 
 // CREATE USER
-exports.createUser = async userData => {
+exports.createUser = async (userData) => {
   const existingUserByEmail = await getUserByEmail(userData.email);
   if (existingUserByEmail) {
-    throw new Error('Invalid Email.');
+    throw new AppError('Invalid email.', 400);
   }
 
   const hashedPassword = await bcrypt.hash(userData.password, 10);
@@ -20,8 +22,19 @@ exports.createUser = async userData => {
   return newUser;
 };
 
+/* // UPDATE USER
+exports.updateUser = async (userData) => {}; */
+
+/* // GET USER BY ID
+exports.findUserById = async (userId) => {
+  const existingUserById = await getUserById(userId.id);
+  if (!existingUserById) {
+    throw new AppError('Invalid ID.', 404);
+  }
+}; */
+
 // CREATE USER PROFILE
-exports.registerUserProfile = async userData => {
+exports.registerUserProfile = async (userData) => {
   const existingUserByUsername = await getUserByUsername(userData.username);
   if (existingUserByUsername) {
     throw new Error('Invalid username.');

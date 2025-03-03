@@ -4,7 +4,7 @@
   "bracketSpacing": true,
   "objectWrap": "preserve",
   "bracketSameLine": true,
-  "arrowParens": "avoid",
+  "arrowParens": "always",
   "printWidth": 80,
   "proseWrap": "always",
   "trailingComma": "all"
