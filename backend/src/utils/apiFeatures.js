@@ -1,57 +1,81 @@
+const prisma = require('../config/db');
+
+const deepConvertNumber = (obj) => {
+  Object.keys(obj).forEach((key) => {
+    if (typeof obj[key] === 'object' && obj[key] !== null) {
+      deepConvertNumber(obj[key]);
+    } else if (!isNaN(obj[key])) {
+      obj[key] = Number(obj[key]);
+    }
+  });
+};
+
 class APIFeatures {
-  constructor(queryString) {
+  constructor(model, queryString) {
+    this.model = prisma[model];
     this.queryString = queryString;
+
     this.options = {};
   }
 
   // Filtering
   filter() {
     const queryObj = { ...this.queryString };
-    const excludedFiles = ['page', 'sort', 'limit', 'fields'];
-    excludedFiles.forEach(el => delete queryObj[el]);
 
-    Object.keys(queryObj).forEach(key => {
-      if (queryObj[key].match(/\(gte|gt|lte|lt)\b/)) {
-        const [operator, value] = queryObj[key].split('_');
-        queryObj[key] = { [operator]: Number(value) };
-      }
-    });
+    const excludedFields = ['page', 'sort', 'limit', 'fields'];
+    excludedFields.forEach((el) => delete queryObj[el]);
 
-    this.options.where = queryObj;
+    let queryStr = JSON.stringify(queryObj);
+    const parsedQuery = JSON.parse(queryStr);
+
+    deepConvertNumber(parsedQuery);
+
+    this.options.where = parsedQuery;
+
+    this.model.findMany(this.options);
+
     return this;
   }
 
-  // Sorting
   sort() {
     if (this.queryString.sort) {
-      const sortBy = this.queryString.sort.split(',').map(field => ({
-        [field]: 'asc',
-      }));
+      const sortBy = this.queryString.sort.split(',').map((field) => {
+        if (field.startsWith('-')) {
+          return { [field.substring(1)]: 'desc' };
+        } else {
+          return { [field]: 'asc' };
+        }
+      });
+      console.log(sortBy);
+
       this.options.orderBy = sortBy;
-    } else {
-      this.options.orderBy = { createdAt: 'desc' };
     }
 
     return this;
   }
 
-  // Limiting Fields
   limitFields() {
     if (this.queryString.fields) {
-      const fieldsArray = this.queryString.fields.split(',');
-      this.options.select = fieldsArray.reduce((acc, field) => {
+      const fields = this.queryString.fields.split(',').reduce((acc, field) => {
         acc[field] = true;
         return acc;
       }, {});
+      this.options.select = fields;
+    } else {
+      this.options.omit = { id: true };
     }
 
     return this;
   }
 
-  // Pagination
   paginate() {
-    const page = parseInt(this.queryString.page, 10) || 1;
-    const limit = parseInt(this.queryString.limit, 10) || 10;
+    let page = Number(this.queryString.page) || 1;
+    let limit = Number(this.queryString.limit) || 100;
+
+    // FOR NEGATIVE NUMBERS
+    page = page < 1 ? 1 : page;
+    limit = limit < 1 ? 100 : limit;
+
     const skip = (page - 1) * limit;
 
     this.options.skip = skip;
@@ -60,8 +84,8 @@ class APIFeatures {
     return this;
   }
 
-  getOptions() {
-    return this.options;
+  async execute() {
+    return await this.model.findMany(this.options);
   }
 }
 

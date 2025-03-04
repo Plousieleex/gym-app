@@ -8,6 +8,15 @@ exports.createUser = async (userData) => {
   });
 };
 
+// GET ALL USERS
+exports.getAllUsers = async () => {
+  return await prisma.users.findMany({
+    orderBy: {
+      id: 'asc',
+    },
+  });
+};
+
 // GET USER
 exports.getUserById = async (userID) => {
   return await prisma.users.findUnique({
@@ -24,6 +33,13 @@ exports.updateUserByID = async (userID, userData) => {
     data: {
       ...userData,
     },
+  });
+};
+
+// DELETE USER BY ID
+exports.deleteUserByID = async (userID) => {
+  return await prisma.users.delete({
+    where: { id: userID },
   });
 };
 

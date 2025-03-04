@@ -1,8 +1,14 @@
 const prisma = require('../config/db');
-const { getUserById, updateUserByID } = require('../models/userModel');
+const {
+  getUserById,
+  updateUserByID,
+  deleteUserByID,
+  getAllUsers,
+} = require('../models/userModel');
 const { createUser } = require('../services/userService');
 const AppError = require('../utils/appError');
 const handleAsync = require('../utils/handleAsync');
+const APIFeatures = require('../utils/apiFeatures');
 
 // CREATE USER
 exports.createUserController = handleAsync(async (req, res, next) => {
@@ -13,9 +19,26 @@ exports.createUserController = handleAsync(async (req, res, next) => {
   });
 });
 
+// GET USERS
+exports.getAllUsersController = handleAsync(async (req, res, next) => {
+  const feature = new APIFeatures('users', req.query)
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate();
+  // console.log(req.query);
+  const users = await feature.execute();
+  res.status(201).json({
+    status: 'success',
+    data: {
+      users,
+    },
+  });
+});
+
 // GET USER BY ID
 exports.getUserById = handleAsync(async (req, res, next) => {
-  const id = req.params.id * 1;
+  const id = Number(req.params.id);
   const user = await getUserById(id);
   if (!user) {
     return next(new AppError('Invalid user id.', 404));
@@ -26,9 +49,9 @@ exports.getUserById = handleAsync(async (req, res, next) => {
   });
 });
 
-// UPDATE USER
+// UPDATE USER BY ID
 exports.updateUserController = handleAsync(async (req, res, next) => {
-  const id = req.params.id * 1;
+  const id = Number(req.params.id);
   const userData = req.body;
 
   const updatedUser = await updateUserByID(id, userData);
@@ -36,6 +59,21 @@ exports.updateUserController = handleAsync(async (req, res, next) => {
     status: 'success',
     data: updatedUser,
   });
+});
+
+// DELETE USER BY ID
+exports.deleteUserController = handleAsync(async (req, res, next) => {
+  const id = Number(req.params.id);
+  const user = await getUserById(id);
+  if (!user) {
+    return next(new AppError('Invalid User.', 404));
+  }
+
+  const deletedUser = await deleteUserByID(id);
+  if (!deletedUser) {
+    return next(new AppError('Failed to delete user.', 500));
+  }
+  res.status(204).send();
 });
 
 // CREATE USER PROFILE
