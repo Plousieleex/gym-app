@@ -16,8 +16,10 @@ const userSchema = Joi.object({
       'string.pattern.base':
         'Password must contain one capital letter, one number and one special character.',
     }),
+  passwordConfirm: Joi.ref('password'),
 });
 
+// FOR CREATE USER (ONLY USE FOR CREATING USER!)
 const validateUser = (req, res, next) => {
   const { error } = userSchema.validate(req.body);
   if (error) {

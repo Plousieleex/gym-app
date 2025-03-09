@@ -1,10 +1,21 @@
-const prisma = require('../config/db');
+/* const prisma = require('../config/db');
 const AppError = require('../utils/appError');
 
 // CREATING USER
-exports.createUser = async (userData) => {
+exports.createUserModel = async ({
+  name_surname,
+  email,
+  password,
+  passwordConfirm,
+}) => {
+  delete passwordConfirm;
+
   return await prisma.users.create({
-    data: userData,
+    data: {
+      name_surname,
+      email,
+      password,
+    },
   });
 };
 
@@ -63,3 +74,4 @@ exports.getUserByUsername = async (username) => {
     where: { username },
   });
 };
+ */

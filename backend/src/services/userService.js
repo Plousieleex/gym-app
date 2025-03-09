@@ -1,42 +1,51 @@
-const bcrypt = require('bcrypt');
-const {
-  createUser,
-  getUserByEmail,
-  getUserByUsername,
-  getUserById,
-} = require('../models/userModel');
+const prisma = require('../config/db');
 const AppError = require('../utils/appError');
+const filterObject = require('../utils/filterObject');
 
-// CREATE USER
-exports.createUser = async (userData) => {
-  const existingUserByEmail = await getUserByEmail(userData.email);
-  if (existingUserByEmail) {
-    throw new AppError('Invalid email.', 400);
+// GET USER BY ID SERVİCE
+exports.getUserByIDService = async (userID) => {
+  const user = await prisma.users.findUnique({
+    where: { id: userID },
+  });
+
+  if (!user) {
+    throw new AppError('User not found.', 404);
   }
 
-  const hashedPassword = await bcrypt.hash(userData.password, 10);
-  userData.password = hashedPassword;
-
-  const newUser = await createUser(userData);
-
-  return newUser;
+  return user;
 };
 
-/* // UPDATE USER
-exports.updateUser = async (userData) => {}; */
-
-/* // GET USER BY ID
-exports.findUserById = async (userId) => {
-  const existingUserById = await getUserById(userId.id);
-  if (!existingUserById) {
-    throw new AppError('Invalid ID.', 404);
+// UPDATE USER BY ID SERVICE
+exports.updateUserByIDService = async (userID, userData) => {
+  if (userData.password || userData.passwordConfirm) {
+    throw new AppError('This route is not for password updates.', 400);
   }
-}; */
+  const filteredBody = filterObject(userData, 'name_surname');
+  const updatedUser = await prisma.users.update({
+    where: { id: userID },
+    data: {
+      ...filteredBody,
+    },
+  });
 
-// CREATE USER PROFILE
-exports.registerUserProfile = async (userData) => {
-  const existingUserByUsername = await getUserByUsername(userData.username);
-  if (existingUserByUsername) {
-    throw new Error('Invalid username.');
+  return updatedUser;
+};
+
+// DELETE USER BY ID SERVICE
+exports.deleteUserByIDService = async (userID) => {
+  const user = await prisma.users.findUnique({
+    where: { id: userID },
+  });
+
+  if (!user) {
+    throw new AppError('Invalid user.', 404);
   }
+
+  const deletedUser = await prisma.users.delete({
+    where: { id: userID },
+  });
+  if (!deletedUser) {
+    throw new AppError('Failed to delete user.', 500);
+  }
+  return deletedUser;
 };
