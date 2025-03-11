@@ -7,6 +7,7 @@ const {
   signUpAuthService,
   forgotPasswordAuthService,
   resetPasswordAuthService,
+  updatePasswordAuthService,
 } = require('../services/authService');
 
 // SIGN UP USERS
@@ -83,6 +84,26 @@ exports.resetPasswordAuthController = handleAsync(async (req, res, next) => {
         'passwordResetToken',
         'passwordResetExpires',
       ]),
+    },
+  });
+});
+
+// UPDATE USER PASSWORD (CLIENT VERSION) (ONLY FOR LOGGED IN USERS)
+exports.updatePasswordAuthController = handleAsync(async (req, res, next) => {
+  const userID = req.user.id;
+  const { currentPassword, newPassword, newPasswordConfirmation } = req.body;
+  const { updatedUser, token } = await updatePasswordAuthService(
+    userID,
+    currentPassword,
+    newPassword,
+    newPasswordConfirmation,
+  );
+
+  res.status(200).json({
+    status: 'success',
+    token,
+    data: {
+      updatedUser,
     },
   });
 });

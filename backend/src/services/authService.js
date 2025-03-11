@@ -4,6 +4,7 @@ const AppError = require('../utils/appError');
 const { signToken } = require('../utils/jwt');
 const { createPasswordResetToken } = require('../utils/passwordResetToken');
 const sendEmail = require('../utils/email');
+const handleAsync = require('../utils/handleAsync');
 
 // REGISTER / SIGN UP SERVICE
 exports.signUpAuthService = async ({
@@ -44,7 +45,6 @@ exports.loginAuthService = async (email, password) => {
   const user = await prisma.users.findUnique({
     where: { email: email },
     omit: {
-      id: true,
       createdAt: true,
       passwordChangedAt: true,
       userRole: true,
@@ -139,6 +139,7 @@ exports.resetPasswordAuthService = async (
     throw new AppError('Invalid or expired token.', 400);
   }
 
+  // CREATE METHOD FOR THIS ONE, YOU USE IT TWICE !(2)
   if (newPassword !== newPasswordConfirmation) {
     throw new AppError('Passwords doesnt match.', 400);
   }
@@ -155,6 +156,41 @@ exports.resetPasswordAuthService = async (
   });
 
   const token = signToken(user.id);
+
+  return { updatedUser, token };
+};
+
+// UPDATE USER PASSWORD (CLIENT VERSION) (ONLY FOR LOGGED IN USERS)
+exports.updatePasswordAuthService = async (
+  userID,
+  currentPassword,
+  newPassword,
+  newPasswordConfirmation,
+) => {
+  // 1) Get user from database
+  // 2) Check if POSTed current password is correct
+  // 3) If so, update password
+  // 4) Log user in, send JWT
+  const user = await prisma.users.findUnique({
+    where: { id: userID },
+  });
+  if (!user || !(await bcrypt.compare(currentPassword, user.password))) {
+    throw new AppError('Invalid user or password.', 400);
+  }
+  if (newPassword !== newPasswordConfirmation) {
+    throw new AppError('Passwords doesnt match.', 400);
+  }
+  const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+  const updatedUser = await prisma.users.update({
+    where: { id: userID },
+    data: {
+      password: hashedPassword,
+      passwordChangedAt: new Date(),
+    },
+  });
+
+  const token = signToken(updatedUser.id);
 
   return { updatedUser, token };
 };
