@@ -46,7 +46,6 @@ class APIFeatures {
           return { [field]: 'asc' };
         }
       });
-      console.log(sortBy);
 
       this.options.orderBy = sortBy;
     }
@@ -62,7 +61,7 @@ class APIFeatures {
       }, {});
       this.options.select = fields;
     } else {
-      this.options.omit = { id: true };
+      this.options.omit = { id: true, password: true };
     }
 
     return this;

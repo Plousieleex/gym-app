@@ -21,6 +21,13 @@ const handlePrismaClientInitializationError = (err) => {
   return new AppError(message, 500);
 };
 
+const handleJWTError = () =>
+  new AppError('Invalid token. Please log in again!', 401);
+
+const handleJWTExpiredError = () => {
+  new AppError('Your token has expired. Please log in again!', 401);
+};
+
 const sendErrorDev = (err, res) => {
   res.status(err.statusCode).json({
     status: err.status,
@@ -60,6 +67,9 @@ module.exports = (err, req, res, next) => {
     if (error.code === 'P2025') error = handleRecordNotFoundError(error);
     if (error.name === 'PrismaClientInitializationError')
       error = handlePrismaClientInitializationError(error);
+    if (error.name === 'JsonWebTokenError') error = handleJWTError(error);
+    if (error.name === 'TokenExpiredError')
+      error = handleJWTExpiredError(error);
     sendErrorProd(error, res);
   }
 };

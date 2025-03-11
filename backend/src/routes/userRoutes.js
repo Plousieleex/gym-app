@@ -1,24 +1,37 @@
 const express = require('express');
 
-const { signUpAuthController } = require('../controllers/authController');
-
 const {
   getAllUsersController,
   getUserByIDController,
   updateUserByIDController,
   deleteUserByIDController,
+  createUserController,
 } = require('../controllers/userController');
+
+const {
+  authProtectMiddleware,
+  checkUserRole,
+} = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
-router.route('/signup').post(signUpAuthController);
-
-router.route('/').get(getAllUsersController);
+router
+  .route('/')
+  .get(authProtectMiddleware, checkUserRole('ADMIN'), getAllUsersController)
+  .post(authProtectMiddleware, checkUserRole('ADMIN'), createUserController);
 
 router
   .route('/:id')
-  .get(getUserByIDController)
-  .patch(updateUserByIDController)
-  .delete(deleteUserByIDController);
+  .get(authProtectMiddleware, checkUserRole('ADMIN'), getUserByIDController)
+  .patch(
+    authProtectMiddleware,
+    checkUserRole('ADMIN'),
+    updateUserByIDController,
+  )
+  .delete(
+    authProtectMiddleware,
+    checkUserRole('ADMIN'),
+    deleteUserByIDController,
+  );
 
 module.exports = router;

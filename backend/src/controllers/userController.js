@@ -6,16 +6,24 @@ const {
   getUserByIDService,
   updateUserByIDService,
   deleteUserByIDService,
+  createUserService,
 } = require('../services/userService');
 
 // CREATE USER
 /* 
-  ONLY FOR ADMIN USAGE.
+  ONLY FOR ADMIN USAGE. 
+  DON'T USE IF THIS ROUTE IS NOT PROTECTED!!
 */
 exports.createUserController = handleAsync(async (req, res, next) => {
-  res.status(500).json({
-    status: 'NOT DEFINED',
-    message: 'USER SERVICE WILL BE USED FOR THIS OPERATION',
+  const newUser = await createUserService({
+    name_surname: req.body.name_surname,
+    email: req.body.email,
+    password: req.body.password,
+  });
+
+  res.status(201).json({
+    status: 'success',
+    data: newUser,
   });
 });
 

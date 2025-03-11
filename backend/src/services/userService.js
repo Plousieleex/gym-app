@@ -1,8 +1,34 @@
 const prisma = require('../config/db');
+const bcrypt = require('bcrypt');
 const AppError = require('../utils/appError');
+const { signToken } = require('../utils/jwt');
 const filterObject = require('../utils/filterObject');
 
-// GET USER BY ID SERVİCE
+// CREATE USER SERVICE (FOR ADMIN USAGE)
+exports.createUserService = async ({ name_surname, email, password }) => {
+  const existingUser = await prisma.users.findUnique({
+    where: { email: email },
+  });
+
+  if (existingUser) {
+    throw new AppError('Invalid email.', 401);
+  }
+  const hashedPassword = await bcrypt.hash(password, 12);
+  password = hashedPassword;
+
+  const newUser = await prisma.users.create({
+    data: {
+      name_surname,
+      email,
+      password,
+    },
+  });
+  const token = signToken(newUser.id);
+
+  return { newUser, token };
+};
+
+// GET USER BY ID SERVICE
 exports.getUserByIDService = async (userID) => {
   const user = await prisma.users.findUnique({
     where: { id: userID },

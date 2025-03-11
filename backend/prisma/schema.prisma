@@ -7,12 +7,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  ADMIN
+  USER
+}
+
 model users {
   id           Int            @id @unique @default(autoincrement())
   name_surname String
   email        String         @unique
   password     String
   createdAt    DateTime       @default(now())
+  passwordChangedAt DateTime? 
+  userRole UserRole @default(USER)
+  passwordResetToken String?
+  passwordResetExpires DateTime?
   user_profile user_profile?
 }
 
