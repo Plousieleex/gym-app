@@ -7,7 +7,11 @@ const {
   updateUserByIDService,
   deleteUserByIDService,
   createUserService,
+  updateAuthUserService,
+  deactivateUserService,
+  deleteUserService,
 } = require('../services/userService');
+const filterObject = require('../utils/filterObject');
 
 // CREATE USER
 /* 
@@ -72,4 +76,48 @@ exports.deleteUserByIDController = handleAsync(async (req, res, next) => {
   const id = Number(req.params.id);
   deleteUserByIDService(id);
   res.status(204).send();
+});
+
+// AUTHENTICATE USER UPDATE DATA (ONLY FOR LOGGED IN USERS NOT FOR ADMINS)
+exports.updateAuthUserController = handleAsync(async (req, res, next) => {
+  // 1) Create error if user POSTs password data
+  if (req.body.password || req.body.passwordConfirm) {
+    return next(new AppError('You cant update your password here.', 400));
+  }
+
+  const updatedUser = await updateAuthUserService(req.user.id, req.body);
+
+  res.status(200).json({
+    status: 'success',
+    data: { updatedUser },
+  });
+});
+
+// AUTHANTICATE USER INACTIVE (MAKES USER INACTIVE, USER CAN RETURN WITH THEIR DATA)
+exports.deactivateUserController = handleAsync(async (req, res, next) => {
+  // 1) Make user's userActive ---> false (Inactive - Controller will be add later)
+  // 2) Authentication is a must
+  const userID = req.user.id;
+
+  await deactivateUserService(userID);
+
+  res.status(200).json({
+    status: 'success',
+    message:
+      'User deactivated succesfully. Users who do not return for 1 month will be deleted from the system.',
+  });
+});
+
+// AUTHANTICATE USER DELETE (DELETES USER'S ALL DATA, USER CAN'T RETURN)
+exports.deleteUserController = handleAsync(async (req, res, next) => {
+  // 1) Authentication is a must
+  // 2) Delete user with all relations
+  const userID = req.user.id;
+
+  await deleteUserService(userID);
+
+  res.status(204).json({
+    status: 'success',
+    data: null,
+  });
 });

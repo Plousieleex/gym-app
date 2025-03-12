@@ -20,6 +20,9 @@ model users {
   createdAt    DateTime       @default(now())
   passwordChangedAt DateTime? 
   userRole UserRole @default(USER)
+  userActive Boolean @default(true) 
+  deletedAt DateTime?
+  lastLogoutAt DateTime?
   passwordResetToken String?
   passwordResetExpires DateTime?
   user_profile user_profile?

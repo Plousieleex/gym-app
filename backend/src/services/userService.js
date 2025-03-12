@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const AppError = require('../utils/appError');
 const { signToken } = require('../utils/jwt');
 const filterObject = require('../utils/filterObject');
+const handleAsync = require('../utils/handleAsync');
 
 // CREATE USER SERVICE (FOR ADMIN USAGE)
 exports.createUserService = async ({ name_surname, email, password }) => {
@@ -74,4 +75,36 @@ exports.deleteUserByIDService = async (userID) => {
     throw new AppError('Failed to delete user.', 500);
   }
   return deletedUser;
+};
+
+// AUTHENTICATE USER UPDATE DATA (ONLY FOR LOGGED IN USERS NOT FOR ADMINS)
+exports.updateAuthUserService = async (userID, updateFields) => {
+  // 2) Update user data
+  const allowedFields = filterObject(updateFields, 'name_surname');
+  const user = await prisma.users.update({
+    where: { id: userID },
+    data: { ...allowedFields },
+  });
+
+  return user;
+};
+
+// AUTHANTICATE USER INACTIVE (MAKES USER INACTIVE, USER CAN RETURN WITH THEIR DATA)
+exports.deactivateUserService = async (userID) => {
+  const deletedAt = new Date();
+  deletedAt.setDate(deletedAt.getDate() + 30);
+  return await prisma.users.update({
+    where: { id: userID },
+    data: {
+      userActive: false,
+      deletedAt: deletedAt.toISOString(),
+      lastLogoutAt: new Date(),
+    },
+  });
+};
+
+exports.deleteUserService = async (userID) => {
+  return await prisma.users.delete({
+    where: { id: userID },
+  });
 };

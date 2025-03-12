@@ -34,6 +34,19 @@ exports.authProtectMiddleware = handleAsync(async (req, res, next) => {
       ),
     );
   }
+  // 3.5) Check if user is active or inactive or logout
+  if (
+    !currentUser.userActive ||
+    (currentUser.lastLogoutAt &&
+      new Date(currentUser.lastLogoutAt > new Date(decoded.iat * 1000)))
+  ) {
+    return next(
+      new AppError(
+        'Account is inactive, dont have permission. Please login to activate.',
+        403,
+      ),
+    );
+  }
   // 4) Check if user changed password after the token was issued
   const hasChanged = await changedPasswordAfterAuthService(
     decoded.id,

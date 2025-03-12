@@ -6,6 +6,9 @@ const {
   updateUserByIDController,
   deleteUserByIDController,
   createUserController,
+  updateAuthUserController,
+  deactivateUserController,
+  deleteUserController,
 } = require('../controllers/userController');
 
 const {
@@ -14,6 +17,14 @@ const {
 } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
+
+router.patch('/updateUser', authProtectMiddleware, updateAuthUserController);
+router.patch(
+  '/deactivateUser',
+  authProtectMiddleware,
+  deactivateUserController,
+);
+router.delete('/deleteUser', authProtectMiddleware, deleteUserController);
 
 router
   .route('/')

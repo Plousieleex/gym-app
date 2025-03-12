@@ -1,4 +1,5 @@
 const dotenv = require('dotenv');
+require('./jobs/deleteInactiveUsers');
 
 /* process.on('uncaughtException', () => {
   process.exit(1);

@@ -1,8 +1,9 @@
 import jwt from 'jsonwebtoken';
 import { promisify } from 'util';
 
-const signToken = (id) => {
-  return jwt.sign({ id: id }, process.env.JWT_SECRET, {
+const signToken = (id, userRole) => {
+  return jwt.sign({ id: id, userRole: userRole }, process.env.JWT_SECRET, {
+    algorithm: 'HS256',
     expiresIn: process.env.JWT_EXPIRES_IN,
   });
 };

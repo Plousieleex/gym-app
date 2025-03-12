@@ -44,12 +44,15 @@ exports.loginAuthService = async (email, password) => {
 
   const user = await prisma.users.findUnique({
     where: { email: email },
-    omit: {
-      createdAt: true,
-      passwordChangedAt: true,
-      userRole: true,
-    },
   });
+
+  // IF USER IS INACTIVE, MAKE ACTIVE
+  if (!user.userActive) {
+    await prisma.users.update({
+      where: { email: email },
+      data: { userActive: true, deletedAt: null },
+    });
+  }
 
   if (!user || !(await bcrypt.compare(password, user.password))) {
     throw new AppError('Invalid email or password.', 401);
@@ -57,7 +60,7 @@ exports.loginAuthService = async (email, password) => {
 
   delete user.password;
 
-  const token = signToken(user.id);
+  const token = signToken(user.id, user.userRole);
   return { user, token };
 };
 
