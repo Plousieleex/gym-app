@@ -24,7 +24,7 @@ exports.authProtectMiddleware = handleAsync(async (req, res, next) => {
   const decoded = await verifyToken(token);
   // 3) Check if user still exists
   const currentUser = await prisma.users.findUnique({
-    where: { id: decoded.id },
+    where: { id: decoded.id || decoded.userId },
   });
   if (!currentUser) {
     return next(
@@ -48,14 +48,19 @@ exports.authProtectMiddleware = handleAsync(async (req, res, next) => {
     );
   }
   // 4) Check if user changed password after the token was issued
-  const hasChanged = await changedPasswordAfterAuthService(
-    decoded.id,
-    decoded.iat,
-  );
-  if (hasChanged) {
-    return next(
-      new AppError('User recently changed password. Please log in again.', 401),
+  if (decoded.provider === 'local') {
+    const hasChanged = await changedPasswordAfterAuthService(
+      decoded.id,
+      decoded.iat,
     );
+    if (hasChanged) {
+      return next(
+        new AppError(
+          'User recently changed password. Please log in again.',
+          401,
+        ),
+      );
+    }
   }
 
   // GRANT ACCESS TO PROTECTED ROUTE

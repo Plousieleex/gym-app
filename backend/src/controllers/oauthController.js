@@ -20,7 +20,7 @@ const oauthController = {
       );
 
       const token = jwt.sign(
-        { userId: user.id, email: user.email },
+        { userId: user.id, email: user.email, provider: 'google' },
         process.env.JWT_SECRET,
         { expiresIn: '24h' },
       );
