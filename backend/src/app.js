@@ -6,6 +6,7 @@ const errorMiddleware = require('./middlewares/errorMiddleware');
 
 const userRouter = require('./routes/userRoutes');
 const authRouter = require('./routes/authRoutes');
+const oauthRouter = require('./routes/oauthRoutes');
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use((req, res, next) => {
 // Routes (NOT ROUTERS)
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/oauth', oauthRouter);
 
 // UNHANDLED ROUTE HANDLER
 app.all('*', (req, res, next) => {

@@ -3,7 +3,6 @@ const bcrypt = require('bcrypt');
 const AppError = require('../utils/appError');
 const { signToken } = require('../utils/jwt');
 const filterObject = require('../utils/filterObject');
-const handleAsync = require('../utils/handleAsync');
 
 // CREATE USER SERVICE (FOR ADMIN USAGE)
 exports.createUserService = async ({ name_surname, email, password }) => {
@@ -14,8 +13,7 @@ exports.createUserService = async ({ name_surname, email, password }) => {
   if (existingUser) {
     throw new AppError('Invalid email.', 401);
   }
-  const hashedPassword = await bcrypt.hash(password, 12);
-  password = hashedPassword;
+  password = await bcrypt.hash(password, 12);
 
   const newUser = await prisma.users.create({
     data: {
@@ -48,14 +46,12 @@ exports.updateUserByIDService = async (userID, userData) => {
     throw new AppError('This route is not for password updates.', 400);
   }
   const filteredBody = filterObject(userData, 'name_surname');
-  const updatedUser = await prisma.users.update({
-    where: { id: userID },
+  return prisma.users.update({
+    where: {id: userID},
     data: {
       ...filteredBody,
     },
   });
-
-  return updatedUser;
 };
 
 // DELETE USER BY ID SERVICE
@@ -81,20 +77,18 @@ exports.deleteUserByIDService = async (userID) => {
 exports.updateAuthUserService = async (userID, updateFields) => {
   // 2) Update user data
   const allowedFields = filterObject(updateFields, 'name_surname');
-  const user = await prisma.users.update({
-    where: { id: userID },
-    data: { ...allowedFields },
+  return prisma.users.update({
+    where: {id: userID},
+    data: {...allowedFields},
   });
-
-  return user;
 };
 
 // AUTHANTICATE USER INACTIVE (MAKES USER INACTIVE, USER CAN RETURN WITH THEIR DATA)
 exports.deactivateUserService = async (userID) => {
   const deletedAt = new Date();
   deletedAt.setDate(deletedAt.getDate() + 30);
-  return await prisma.users.update({
-    where: { id: userID },
+  return prisma.users.update({
+    where: {id: userID},
     data: {
       userActive: false,
       deletedAt: deletedAt.toISOString(),
@@ -104,7 +98,7 @@ exports.deactivateUserService = async (userID) => {
 };
 
 exports.deleteUserService = async (userID) => {
-  return await prisma.users.delete({
+  return prisma.users.delete({
     where: { id: userID },
   });
 };

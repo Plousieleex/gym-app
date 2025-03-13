@@ -13,34 +13,52 @@ enum UserRole {
 }
 
 model users {
-  id           Int            @id @unique @default(autoincrement())
-  name_surname String
-  email        String         @unique
-  password     String
-  createdAt    DateTime       @default(now())
-  passwordChangedAt DateTime? 
-  userRole UserRole @default(USER)
-  userActive Boolean @default(true) 
-  deletedAt DateTime?
-  lastLogoutAt DateTime?
-  passwordResetToken String?
+  id                   Int                    @id @unique @default(autoincrement())
+  name_surname         String
+  email                String                 @unique
+  password             String?
+  createdAt            DateTime               @default(now())
+  passwordChangedAt    DateTime?
+  userRole             UserRole               @default(USER)
+  userActive           Boolean                @default(true)
+  deletedAt            DateTime?
+  lastLogoutAt         DateTime?
+  passwordResetToken   String?
   passwordResetExpires DateTime?
-  user_profile user_profile?
+  user_profile         user_profile?
+  oauth_providers      user_oauth_providers[]
 }
 
 model user_profile {
-  userId Int @unique
-  user users @relation(fields: [userId], references: [id])
-  username String @unique
-  height Int
-  weight Int
-  body_mass_index Int
-  training_experience String
-  training_aim String
-  user_sex String @db.Char(1)
-  training_duration Int
-  birthdate DateTime
+  userId                Int      @unique
+  user                  users    @relation(fields: [userId], references: [id])
+  username              String   @unique
+  height                Int
+  weight                Int
+  body_mass_index       Int
+  training_experience   String
+  training_aim          String
+  user_sex              String   @db.Char(1)
+  training_duration     Int
+  birthdate             DateTime
   social_media_accounts String[]
-  biography String
-  profile_img String
+  biography             String
+  profile_img           String
+}
+
+model user_oauth_providers {
+  id                    Int       @id @default(autoincrement())
+  usersId               Int
+  users                 users     @relation(fields: [usersId], references: [id])
+  provider              String
+  provider_id           String
+  access_token_iv       String?
+  access_token_content  String?
+  refresh_token_iv      String?
+  refresh_token_content String?
+  token_expires         DateTime?
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @updatedAt
+
+  @@unique([provider, provider_id])
 }

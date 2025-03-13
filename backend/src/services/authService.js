@@ -31,6 +31,7 @@ exports.signUpAuthService = async ({
       password,
     },
   });
+
   const token = signToken(newUser.id);
 
   return { newUser, token };
@@ -42,15 +43,15 @@ exports.loginAuthService = async (email, password) => {
     throw new AppError('Please provide email and password.', 400);
   }
 
-  const user = await prisma.users.findUnique({
+  let user = await prisma.users.findUnique({
     where: { email: email },
   });
 
   // IF USER IS INACTIVE, MAKE ACTIVE
   if (!user.userActive) {
-    await prisma.users.update({
-      where: { email: email },
-      data: { userActive: true, deletedAt: null },
+    user = await prisma.users.update({
+      where: { id: user.id },
+      data: { userActive: true, deletedAt: null, lastLogoutAt: null },
     });
   }
 

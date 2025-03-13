@@ -48,7 +48,7 @@ exports.getAllUsersController = handleAsync(async (req, res, next) => {
   });
 });
 
-// GET USER BY ID
+// GET USER BY ID (REFACTOR)
 exports.getUserByIDController = handleAsync(async (req, res, next) => {
   const id = Number(req.params.id);
   const user = await getUserByIDService(id);
@@ -58,7 +58,7 @@ exports.getUserByIDController = handleAsync(async (req, res, next) => {
   });
 });
 
-// UPDATE USER BY ID
+// UPDATE USER BY ID (REFACTOR)
 exports.updateUserByIDController = handleAsync(async (req, res, next) => {
   const id = Number(req.params.id);
   const updatedUser = await updateUserByIDService(id, req.body);
@@ -71,10 +71,10 @@ exports.updateUserByIDController = handleAsync(async (req, res, next) => {
   });
 });
 
-// DELETE USER BY ID
+// DELETE USER BY ID (ADMIN MANUEL DELETE --> ALL DATA WILL GONE)
 exports.deleteUserByIDController = handleAsync(async (req, res, next) => {
   const id = Number(req.params.id);
-  deleteUserByIDService(id);
+  await deleteUserByIDService(id);
   res.status(204).send();
 });
 
