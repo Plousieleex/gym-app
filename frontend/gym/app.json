@@ -33,7 +33,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
@@ -43,8 +44,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "8cbf182f-0f54-474c-b73a-57aed7ed9a3b"
+        "projectId": "1ce28ecd-55a9-4df5-a134-266a44405016"
       }
-    }
+    },
+    "owner": "umitdemirci1"
   }
 }
