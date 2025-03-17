@@ -1,4 +1,5 @@
 const express = require('express');
+const session = require('express-session');
 const morgan = require('morgan');
 const AppError = require('./utils/appError');
 const errorMiddleware = require('./middlewares/errorMiddleware');
@@ -17,9 +18,14 @@ if (process.env.NODE_ENV === 'development') {
 
 app.use(express.json());
 
-app.use((req, res, next) => {
-  next();
-});
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: process.env.NODE_ENV === 'production' },
+  }),
+);
 
 // Routes (NOT ROUTERS)
 app.use('/api/v1/users', userRouter);

@@ -28,9 +28,14 @@ const getConnectionUrl = (auth) => {
   });
 };
 
-const getGoogleAuthUrl = () => {
+const getGoogleAuthUrl = (state) => {
   const auth = createConnection();
-  const url = getConnectionUrl(auth);
+  const url = auth.generateAuthUrl({
+    access_type: 'offline',
+    scope: ['profile', 'email'],
+    state: state,
+  });
+
   return url;
 };
 

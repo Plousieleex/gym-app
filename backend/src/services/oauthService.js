@@ -1,5 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = global.prisma || new PrismaClient();
+global.prisma = prisma;
+
 const { google } = require('googleapis');
 const { createConnection } = require('../config/oauth');
 const { encrypt, decrypt } = require('../utils/encryption');
@@ -36,6 +38,7 @@ const oauthService = {
           name_surname:
             userInfo.name || `${userInfo.given_name} ${userInfo.family_name}`,
           userActive: true,
+          provider,
         },
       });
     }

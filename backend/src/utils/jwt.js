@@ -1,15 +1,29 @@
-import jwt from 'jsonwebtoken';
-import { promisify } from 'util';
+const jwt = require('jsonwebtoken');
+const promisify = require('util').promisify;
 
-const signToken = (id, userRole) => {
-  return jwt.sign({ id: id, userRole: userRole }, process.env.JWT_SECRET, {
-    algorithm: 'HS256',
-    expiresIn: process.env.JWT_EXPIRES_IN,
-  });
+exports.signTokenLocal = (id, userRole) => {
+  return jwt.sign(
+    { id: id, userRole: userRole, provider: 'local' },
+    process.env.JWT_SECRET,
+    {
+      algorithm: 'HS256',
+      expiresIn: process.env.JWT_EXPIRES_IN,
+    },
+  );
 };
 
-const verifyToken = async (token) => {
+exports.signTokenGoogle = (id, userEmail) => {
+  return jwt.sign(
+    {
+      id: id,
+      email: userEmail,
+      provider: 'google',
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN },
+  );
+};
+
+exports.verifyToken = async (token) => {
   return await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 };
-
-export { signToken, verifyToken };

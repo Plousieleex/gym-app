@@ -13,20 +13,25 @@ enum UserRole {
 }
 
 model users {
-  id                   Int                    @id @unique @default(autoincrement())
-  name_surname         String
-  email                String                 @unique
-  password             String?
-  createdAt            DateTime               @default(now())
-  passwordChangedAt    DateTime?
-  userRole             UserRole               @default(USER)
-  userActive           Boolean                @default(true)
-  deletedAt            DateTime?
-  lastLogoutAt         DateTime?
-  passwordResetToken   String?
-  passwordResetExpires DateTime?
-  user_profile         user_profile?
-  oauth_providers      user_oauth_providers[]
+  id                     Int                    @id @unique @default(autoincrement())
+  name_surname           String
+  email                  String                 @unique
+  password               String?
+  createdAt              DateTime               @default(now())
+  passwordChangedAt      DateTime?
+  userRole               UserRole               @default(USER)
+  userActive             Boolean                @default(false)
+  activationToken        String?
+  activationTokenExpires DateTime?
+  provider               String                 @default("local")
+  deletedAt              DateTime?
+  lastLogoutAt           DateTime?
+  passwordResetToken     String?
+  passwordResetExpires   DateTime?
+  user_profile           user_profile?
+  oauth_providers        user_oauth_providers[]
+
+  @@map("users")
 }
 
 model user_profile {
@@ -44,6 +49,8 @@ model user_profile {
   social_media_accounts String[]
   biography             String
   profile_img           String
+
+  @@map("user_profiles")
 }
 
 model user_oauth_providers {
@@ -61,4 +68,5 @@ model user_oauth_providers {
   updated_at            DateTime  @updatedAt
 
   @@unique([provider, provider_id])
+  @@map("user_oath_providers")
 }

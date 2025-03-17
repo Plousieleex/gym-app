@@ -1,8 +1,10 @@
 const crypto = require('crypto');
-const bcrypt = require('bcrypt');
 
 exports.createPasswordResetToken = async () => {
   const resetToken = crypto.randomBytes(32).toString('hex');
-  const hashedToken = await bcrypt.hash(resetToken, 12);
+  const hashedToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
   return { resetToken, hashedToken };
 };

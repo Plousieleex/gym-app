@@ -1,4 +1,32 @@
 const express = require('express');
+const router = express.Router();
+
+const userController = require('../controllers/userController');
+
+router
+  .route('/activate/:token')
+  .get(userController.activateAccountUserController);
+
+router.route('/updateUser').patch(userController.updateAuthUserController);
+router.route('/deactivateUser').patch(userController.deactivateUserController);
+router
+  .route('/deleteUser')
+  .delete(userController.deleteUserPermanentlyController);
+
+router
+  .route('/')
+  .get(userController.getAllUsersController)
+  .post(userController.createUserController);
+
+router
+  .route('/:id')
+  .get(userController.getUserByIDController)
+  .patch(userController.updateUserByIDController)
+  .delete(userController.deleteUserByIDController);
+
+module.exports = router;
+
+/*const express = require('express');
 
 const {
   getAllUsersController,
@@ -45,4 +73,4 @@ router
     deleteUserByIDController,
   );
 
-module.exports = router;
+module.exports = router;*/

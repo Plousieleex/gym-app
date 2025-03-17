@@ -1,74 +1,58 @@
 const handleAsync = require('../utils/handleAsync');
-const { createUserService } = require('../services/userService');
-const AppError = require('../utils/appError');
+const authService = require('../services/authService');
 const _ = require('lodash');
-const {
-  loginAuthService,
-  signUpAuthService,
-  forgotPasswordAuthService,
-  resetPasswordAuthService,
-  updatePasswordAuthService,
-} = require('../services/authService');
 
-// SIGN UP USERS
-exports.signUpAuthController = handleAsync(async (req, res, next) => {
-  // AUTH SERVICE SIGN UP
-  const newUser = await signUpAuthService({
+// SIGN UP USERS (EMAIL OR SMS VALIDATION NEEDED)
+exports.signUpAuthUsersController = handleAsync(async (req, res, next) => {
+  const newUser = await authService.signUpUsersAuthService({
     name_surname: req.body.name_surname,
     email: req.body.email,
     password: req.body.password,
-    passwordConfirmation: req.body.passwordConfirmation,
+    passwordConfirm: req.body.passwordConfirm,
   });
 
   res.status(201).json({
     status: 'success',
+    message:
+      'User signed up successfully. Please activate your account via email.',
     data: {
       newUser,
     },
   });
 });
 
+// LOGIN AUTH CONTROLLER
 exports.loginAuthController = handleAsync(async (req, res, next) => {
   const { email, password } = req.body;
-  const { user, token } = await loginAuthService(email, password);
-  /* 
-  1) Check if email and password exist
+  const { user, token } = await authService.loginAuthService(email, password);
 
-  2) Check if user exists && password is correct
-
-  3) If everything ok, send token to client
-  */
   res.status(200).json({
     status: 'success',
     token,
     data: { user },
   });
-
-  // AUTH SERVICE LOGIN
 });
 
 // FORGOT PASSWORD CONTROLLER
 exports.forgotPasswordAuthController = handleAsync(async (req, res, next) => {
-  // 1) Get user based on POSTed email
-  const resetURL = await forgotPasswordAuthService(req.body.email);
-  // 2) Generate the random reset token
-  // 3) Send it to user's email
+  const email = req.body.email;
+  await authService.forgotPasswordAuthService(email);
 
   res.status(200).json({
     status: 'success',
-    message: 'Password reset URL sent!',
+    message: 'Password reset link sent.',
   });
 });
 
 // RESET PASSWORD AUTH CONTROLLER
 exports.resetPasswordAuthController = handleAsync(async (req, res, next) => {
   const resetToken = req.params.token;
-  const { newPassword, newPasswordConfirmation } = req.body;
 
-  const { updatedUser, token } = await resetPasswordAuthService(
+  const { newPassword, newPasswordConfirm } = req.body;
+  const { updatedUser, token } = await authService.resetPasswordAuthService(
     resetToken,
     newPassword,
-    newPasswordConfirmation,
+    newPasswordConfirm,
   );
 
   res.status(200).json({
@@ -88,15 +72,15 @@ exports.resetPasswordAuthController = handleAsync(async (req, res, next) => {
   });
 });
 
-// UPDATE USER PASSWORD (CLIENT VERSION) (ONLY FOR LOGGED IN USERS)
+// UPDATED USER PASSWORD (CLIENT VERSION) (ONLY FOR LOGGED IN USERS)
 exports.updatePasswordAuthController = handleAsync(async (req, res, next) => {
-  const userID = req.user.id;
-  const { currentPassword, newPassword, newPasswordConfirmation } = req.body;
-  const { updatedUser, token } = await updatePasswordAuthService(
+  const userID = req.params.id;
+  const { currentPassword, newPassword, newPasswordConfirm } = req.body;
+  const { updatedUser, token } = await authService.updatePasswordAuthService(
     userID,
     currentPassword,
     newPassword,
-    newPasswordConfirmation,
+    newPasswordConfirm,
   );
 
   res.status(200).json({
@@ -106,4 +90,9 @@ exports.updatePasswordAuthController = handleAsync(async (req, res, next) => {
       updatedUser,
     },
   });
+});
+
+// UPDATE EMAIL CONTROLLER (ONLY FOR LOGGED IN USERS)
+exports.updateEmailAuthController = handleAsync(async (req, res, next) => {
+  const userID = req.params.id;
 });

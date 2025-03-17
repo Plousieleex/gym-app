@@ -1,57 +1,79 @@
 const prisma = require('../config/db');
 const bcrypt = require('bcrypt');
 const AppError = require('../utils/appError');
-const { signToken } = require('../utils/jwt');
-const { createPasswordResetToken } = require('../utils/passwordResetToken');
+const jwt = require('../utils/jwt');
+const crypto = require('crypto');
+const passwordResetToken = require('../utils/passwordResetToken');
 const sendEmail = require('../utils/email');
-const handleAsync = require('../utils/handleAsync');
+const { token } = require('morgan');
 
-// REGISTER / SIGN UP SERVICE
-exports.signUpAuthService = async ({
+// SIGN UP USERS SERVICE
+exports.signUpUsersAuthService = async ({
   name_surname,
   email,
   password,
-  passwordConfirmation,
+  passwordConfirm,
 }) => {
   const existingUser = await prisma.users.findUnique({
     where: { email: email },
   });
 
   if (existingUser) {
-    throw new AppError('Invalid email.', 401);
+    throw new AppError('User already exists', 401);
   }
 
-  const hashedPassword = await bcrypt.hash(password, 12);
-  password = hashedPassword;
-  delete passwordConfirmation;
-  const newUser = await prisma.users.create({
-    data: {
-      name_surname,
-      email,
-      password,
-    },
-  });
+  if (!(password === passwordConfirm)) {
+    throw new AppError('Passwords do not match', 401);
+  }
 
-  const token = signToken(newUser.id);
+  password = await bcrypt.hash(password, 12);
+  delete passwordConfirm;
 
-  return { newUser, token };
+  try {
+    const newUser = await prisma.users.create({
+      data: {
+        name_surname,
+        email,
+        password,
+        activationToken: crypto.randomBytes(32).toString('hex'),
+        activationTokenExpires: new Date(Date.now() + 10 * 60 * 1000),
+      },
+    });
+
+    const activationLink = `${process.env.APPLICATION_URL}/api/v1/users/activate/${newUser.activationToken}`;
+
+    await sendEmail({
+      email: newUser.email,
+      subject: 'Activate Your Account!',
+      message: `Please click to activate your account: ${activationLink}`,
+    });
+
+    return { newUser };
+  } catch (error) {
+    await prisma.users.deleteMany({ where: { email } });
+
+    throw new AppError('User creation failed.', 500);
+  }
 };
 
-// LOGIN SERVICE
+// LOGIN AUTH SERVICE
 exports.loginAuthService = async (email, password) => {
   if (!email || !password) {
-    throw new AppError('Please provide email and password.', 400);
+    throw new AppError('Please provide an email or password', 400);
   }
 
   let user = await prisma.users.findUnique({
     where: { email: email },
   });
 
-  // IF USER IS INACTIVE, MAKE ACTIVE
-  if (!user.userActive) {
+  if (!user.isActive) {
     user = await prisma.users.update({
       where: { id: user.id },
-      data: { userActive: true, deletedAt: null, lastLogoutAt: null },
+      data: {
+        userActive: true,
+        deletedAt: null,
+        lastLogoutAt: null,
+      },
     });
   }
 
@@ -61,91 +83,64 @@ exports.loginAuthService = async (email, password) => {
 
   delete user.password;
 
-  const token = signToken(user.id, user.userRole);
+  const token = jwt.signTokenLocal(user.id, user.userRole);
+
   return { user, token };
 };
 
-// CHANGED PASSWORD AFTER SERVICE
-exports.changedPasswordAfterAuthService = async (userID, JWTTimeStamp) => {
-  const user = await prisma.users.findUnique({
-    where: { id: userID },
-    select: { passwordChangedAt: true },
-  });
-
-  if (!user || !user.passwordChangedAt) return false;
-
-  const changedTimeStamp = parseInt(
-    user.passwordChangedAt.getTime() / 1000,
-    10,
-  );
-
-  return JWTTimeStamp < changedTimeStamp;
-};
-
-// FORGOT PASSWORD SERVICE (NOT RESET, FORGOT, IT TAKES EMAIL)
+// FORGOT PASSWORD SERVICE (TAKES EMAIL, THIS IS NOT A RESET OR CHANGE)
 exports.forgotPasswordAuthService = async (email) => {
   const user = await prisma.users.findUnique({
     where: { email: email },
   });
+
   if (!user) {
     throw new AppError('Invalid email.', 404);
   }
 
-  const { resetToken, hashedToken } = await createPasswordResetToken();
-
-  const updateUser = await prisma.users.update({
-    where: { email: user.email },
+  const { resetToken, hashedToken } =
+    await passwordResetToken.createPasswordResetToken();
+  const updatedUser = await prisma.users.update({
+    where: { email: email },
     data: {
       passwordResetToken: hashedToken,
       passwordResetExpires: new Date(Date.now() + 3 * 60 * 1000).toISOString(),
     },
   });
 
-  const resetURL = `http://localhost:3000/api/v1/auth/resetPassword/${resetToken}`;
+  const resetURL = `${process.env.APPLICATION_URL}/api/v1/auth/resetPassword/${resetToken}`;
 
   await sendEmail({
-    email: updateUser.email,
-    subject: 'Password reset.',
+    email: updatedUser.email,
+    subject: 'Password Reset',
     message: `Password reset link: ${resetURL}`,
   });
-
-  return resetURL;
 };
 
-// RESET PASSWORD BASED UPON USER TOKEN
+// RESET PASSWORD AUTH SERVICE
 exports.resetPasswordAuthService = async (
   resetToken,
   newPassword,
-  newPasswordConfirmation,
+  newPasswordConfirm,
 ) => {
-  // 1) Get user based on the token
-  // 2) If token has not expired, and there is user, set the new password
-  // 3) Update changedPasswordAt property for the user
-  // 4) Log the user in, send JWT
+  const hashedToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+
   const user = await prisma.users.findFirst({
     where: {
-      passwordResetExpires: {
-        gte: new Date(),
-      },
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { gte: new Date() },
     },
   });
 
   if (!user) {
-    throw new AppError('Invalid token or user does not exist.', 400);
+    throw new AppError('Token is invalid or has expired.', 401);
   }
 
-  const isTokenValid = await bcrypt.compare(
-    resetToken,
-    user.passwordResetToken,
-  );
-
-  if (!isTokenValid) {
-    throw new AppError('Invalid or expired token.', 400);
-  }
-
-  // CREATE METHOD FOR THIS ONE, YOU USE IT TWICE !(2)
-  if (newPassword !== newPasswordConfirmation) {
-    throw new AppError('Passwords doesnt match.', 400);
+  if (newPassword !== newPasswordConfirm) {
+    throw new AppError("Passwords doesn't match", 401);
   }
 
   const hashedPassword = await bcrypt.hash(newPassword, 12);
@@ -159,31 +154,30 @@ exports.resetPasswordAuthService = async (
     },
   });
 
-  const token = signToken(user.id);
+  const token = jwt.signTokenLocal(user.id, user.userRole);
 
   return { updatedUser, token };
 };
 
-// UPDATE USER PASSWORD (CLIENT VERSION) (ONLY FOR LOGGED IN USERS)
+// UPDATED USER PASSWORD (CLIENT VERSION) (ONLY FOR LOGGED IN USERS)
 exports.updatePasswordAuthService = async (
   userID,
   currentPassword,
   newPassword,
-  newPasswordConfirmation,
+  newPasswordConfirm,
 ) => {
-  // 1) Get user from database
-  // 2) Check if POSTed current password is correct
-  // 3) If so, update password
-  // 4) Log user in, send JWT
   const user = await prisma.users.findUnique({
     where: { id: userID },
   });
+
   if (!user || !(await bcrypt.compare(currentPassword, user.password))) {
     throw new AppError('Invalid user or password.', 400);
   }
-  if (newPassword !== newPasswordConfirmation) {
-    throw new AppError('Passwords doesnt match.', 400);
+
+  if (newPassword !== newPasswordConfirm) {
+    throw new AppError('Passwords do not match', 401);
   }
+
   const hashedPassword = await bcrypt.hash(newPassword, 12);
 
   const updatedUser = await prisma.users.update({
@@ -194,7 +188,7 @@ exports.updatePasswordAuthService = async (
     },
   });
 
-  const token = signToken(updatedUser.id);
+  const token = jwt.signTokenLocal(updatedUser.id, updatedUser.userRole);
 
   return { updatedUser, token };
 };

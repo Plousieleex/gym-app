@@ -1,94 +1,121 @@
 const prisma = require('../config/db');
 const bcrypt = require('bcrypt');
 const AppError = require('../utils/appError');
-const { signToken } = require('../utils/jwt');
+const jwt = require('../utils/jwt');
 const filterObject = require('../utils/filterObject');
 
 // CREATE USER SERVICE (FOR ADMIN USAGE)
-exports.createUserService = async ({ name_surname, email, password }) => {
+exports.createUserService = async ({
+  name_surname,
+  email,
+  password,
+  userRole,
+}) => {
   const existingUser = await prisma.users.findUnique({
     where: { email: email },
   });
 
   if (existingUser) {
-    throw new AppError('Invalid email.', 401);
+    throw new AppError('User already exists.', 401);
   }
+
   password = await bcrypt.hash(password, 12);
 
-  const newUser = await prisma.users.create({
+  const user = await prisma.users.create({
     data: {
       name_surname,
       email,
       password,
+      userRole,
     },
   });
-  const token = signToken(newUser.id);
 
-  return { newUser, token };
+  const token = jwt.signTokenLocal(user.id);
+
+  return { user, token };
 };
 
-// GET USER BY ID SERVICE
-exports.getUserByIDService = async (userID) => {
+// GET USER BY LOOKING TO ID
+exports.getUserByIDService = async ({ userID }) => {
   const user = await prisma.users.findUnique({
     where: { id: userID },
   });
 
   if (!user) {
-    throw new AppError('User not found.', 404);
+    throw new AppError('User not found', 401);
   }
 
   return user;
 };
 
-// UPDATE USER BY ID SERVICE
+// UPDATE USER BY LOOKING TO ID
 exports.updateUserByIDService = async (userID, userData) => {
-  if (userData.password || userData.passwordConfirm) {
-    throw new AppError('This route is not for password updates.', 400);
+  const user = await prisma.users.findUnique({
+    where: { id: userID },
+  });
+
+  if (!user) {
+    throw new AppError('User not found', 401);
   }
+
+  if (userData.password || userData.passwordConfirm) {
+    throw new AppError('This service is not for password updates.', 400);
+  }
+
   const filteredBody = filterObject(userData, 'name_surname');
+
   return prisma.users.update({
-    where: {id: userID},
+    where: { id: userID },
     data: {
       ...filteredBody,
     },
   });
 };
 
-// DELETE USER BY ID SERVICE
+// DELETE USER BY ID (ADMIN MANUAL DELETE / ALL DATA WILL GONE --> MAKE PROTECTED)
 exports.deleteUserByIDService = async (userID) => {
   const user = await prisma.users.findUnique({
     where: { id: userID },
   });
 
   if (!user) {
-    throw new AppError('Invalid user.', 404);
+    throw new AppError('User not found', 401);
   }
 
-  const deletedUser = await prisma.users.delete({
-    where: { id: userID },
-  });
-  if (!deletedUser) {
+  try {
+    return prisma.users.delete({
+      where: { id: userID },
+    });
+  } catch (error) {
     throw new AppError('Failed to delete user.', 500);
   }
-  return deletedUser;
 };
 
 // AUTHENTICATE USER UPDATE DATA (ONLY FOR LOGGED IN USERS NOT FOR ADMINS)
-exports.updateAuthUserService = async (userID, updateFields) => {
-  // 2) Update user data
-  const allowedFields = filterObject(updateFields, 'name_surname');
+exports.updateAuthUserService = async (userID, userData) => {
+  const allowedFields = filterObject(userData, 'name_surname');
   return prisma.users.update({
-    where: {id: userID},
-    data: {...allowedFields},
+    where: { id: userID },
+    data: {
+      ...allowedFields,
+    },
   });
 };
 
-// AUTHANTICATE USER INACTIVE (MAKES USER INACTIVE, USER CAN RETURN WITH THEIR DATA)
+// AUTHENTICATE USER INACTIVE (MAKES USER INACTIVE, USER CAN RETURN WITH THEIR DATA)
 exports.deactivateUserService = async (userID) => {
+  const user = await prisma.users.findUnique({
+    where: { id: userID },
+  });
+
+  if (!user) {
+    throw new AppError('User not found', 401);
+  }
+
   const deletedAt = new Date();
   deletedAt.setDate(deletedAt.getDate() + 30);
   return prisma.users.update({
-    where: {id: userID},
+    where: { id: userID },
     data: {
       userActive: false,
       deletedAt: deletedAt.toISOString(),
@@ -97,8 +124,38 @@ exports.deactivateUserService = async (userID) => {
   });
 };
 
-exports.deleteUserService = async (userID) => {
+// AUTHENTICATE USER DELETE (DELETES USER'S ALL DATA, USER CAN'T RETURN)
+exports.deleteUserPermanentlyService = async (userID) => {
   return prisma.users.delete({
     where: { id: userID },
   });
+};
+
+// USER ACTIVATION BY EMAIL (EMAIL SENDING IS HANDLING IN AUTH SERVICE)
+exports.activateAccountUserService = async (activationToken) => {
+  const user = await prisma.users.findFirst({
+    where: {
+      activationToken,
+      activationTokenExpires: {
+        gte: new Date(),
+      },
+    },
+  });
+
+  if (!user) {
+    throw new AppError('Invalid activation link!', 400);
+  }
+
+  const updatedUser = await prisma.users.update({
+    where: { id: user.id },
+    data: {
+      userActive: true,
+      activationToken: null,
+      activationTokenExpires: null,
+    },
+  });
+
+  const token = jwt.signTokenLocal(updatedUser.id);
+
+  return { updatedUser, token };
 };
