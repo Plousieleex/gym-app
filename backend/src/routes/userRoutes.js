@@ -2,13 +2,19 @@ const express = require('express');
 const router = express.Router();
 
 const userController = require('../controllers/userController');
+const authMiddleware = require('../middlewares/authMiddleware');
 
 router
   .route('/activate/:token')
   .get(userController.activateAccountUserController);
 
 router.route('/updateUser').patch(userController.updateAuthUserController);
-router.route('/deactivateUser').patch(userController.deactivateUserController);
+router
+  .route('/deactivateUser')
+  .patch(
+    authMiddleware.authProtectMiddleware,
+    userController.deactivateUserController,
+  );
 router
   .route('/deleteUser')
   .delete(userController.deleteUserPermanentlyController);

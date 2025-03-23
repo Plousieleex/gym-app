@@ -1,5 +1,6 @@
 const prisma = require('../config/db');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const AppError = require('../utils/appError');
 const jwt = require('../utils/jwt');
 const filterObject = require('../utils/filterObject');
@@ -133,23 +134,25 @@ exports.deleteUserPermanentlyService = async (userID) => {
 
 // USER ACTIVATION BY EMAIL (EMAIL SENDING IS HANDLING IN AUTH SERVICE)
 exports.activateAccountUserService = async (activationToken) => {
+  const activationHashedToken = crypto
+    .createHash('sha256')
+    .update(activationToken)
+    .digest('hex');
+
   const user = await prisma.users.findFirst({
     where: {
-      activationToken,
-      activationTokenExpires: {
-        gte: new Date(),
-      },
+      activationToken: activationHashedToken,
     },
   });
 
-  if (!user) {
-    throw new AppError('Invalid activation link!', 400);
+  if (!user || user.activationTokenExpires < new Date()) {
+    throw new AppError('Token is invalid or has expired. Please resend.', 400);
   }
 
   const updatedUser = await prisma.users.update({
     where: { id: user.id },
     data: {
-      userActive: true,
+      isActivated: true,
       activationToken: null,
       activationTokenExpires: null,
     },

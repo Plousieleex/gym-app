@@ -30,17 +30,23 @@ exports.signUpUsersAuthService = async ({
   delete passwordConfirm;
 
   try {
+    const { activationToken, activationHashedToken } =
+      await passwordResetToken.createActivationToken();
+
+    console.log('activationToken', activationToken);
+    console.log('activationHashedToken', activationHashedToken);
+
     const newUser = await prisma.users.create({
       data: {
         name_surname,
         email,
         password,
-        activationToken: crypto.randomBytes(32).toString('hex'),
+        activationToken: activationHashedToken,
         activationTokenExpires: new Date(Date.now() + 10 * 60 * 1000),
       },
     });
 
-    const activationLink = `${process.env.APPLICATION_URL}/api/v1/users/activate/${newUser.activationToken}`;
+    const activationLink = `${process.env.APPLICATION_URL}/api/v1/users/activate/${activationToken}`;
 
     await sendEmail({
       email: newUser.email,
@@ -66,7 +72,11 @@ exports.loginAuthService = async (email, password) => {
     where: { email: email },
   });
 
-  if (!user.isActive) {
+  if (!user.isActivated) {
+    throw new AppError('Please activate your account', 401);
+  }
+
+  if (!user.userActive) {
     user = await prisma.users.update({
       where: { id: user.id },
       data: {
@@ -191,4 +201,20 @@ exports.updatePasswordAuthService = async (
   const token = jwt.signTokenLocal(updatedUser.id, updatedUser.userRole);
 
   return { updatedUser, token };
+};
+
+exports.changedPasswordAfterAuthService = async (userID, JWTTimeStamp) => {
+  const user = await prisma.users.findUnique({
+    where: { id: userID },
+    select: { passwordChangedAt: true },
+  });
+
+  if (!user || !user.passwordChangedAt) return false;
+
+  const changedTimeStamp = parseInt(
+    user.passwordChangedAt.getTime() / 1000,
+    10,
+  );
+
+  return JWTTimeStamp < changedTimeStamp;
 };

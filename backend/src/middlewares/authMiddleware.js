@@ -23,7 +23,7 @@ exports.authProtectMiddleware = handleAsync(async (req, res, next) => {
 
   // 3) Check if user still exists
   const currentUser = await prisma.users.findUnique({
-    where: { id: decodedToken || decoded.userId },
+    where: { id: decodedToken.id },
   });
 
   if (!currentUser) {
@@ -34,7 +34,7 @@ exports.authProtectMiddleware = handleAsync(async (req, res, next) => {
   if (
     !currentUser.userActive ||
     (currentUser.lastLogoutAt &&
-      new Date(currentUser.lastLogoutAt > new Date(decoded.iat * 1000)))
+      new Date(currentUser.lastLogoutAt > new Date(decodedToken.iat * 1000)))
   ) {
     return next(
       new AppError('Account is inactive or logged out. Login again.', 403),
@@ -42,10 +42,10 @@ exports.authProtectMiddleware = handleAsync(async (req, res, next) => {
   }
 
   // 5) Check if user changed password (local users)
-  if (decoded.provider === 'local') {
+  if (decodedToken.provider === 'local') {
     const hasChanged = await authService.changedPasswordAfterAuthService(
-      decoded.id,
-      decoded.iat,
+      decodedToken.id,
+      decodedToken.iat,
     );
 
     if (hasChanged) {

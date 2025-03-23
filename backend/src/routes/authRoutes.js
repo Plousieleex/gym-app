@@ -18,12 +18,7 @@ router
   .route('/resetPassword/:token')
   .patch(authController.resetPasswordAuthController);
 
-router
-  .route('/login')
-  .post(
-    authMiddleware.authProtectMiddleware,
-    authController.loginAuthController,
-  );
+router.route('/login').post(authController.loginAuthController);
 
 router
   .route('/changePassword')

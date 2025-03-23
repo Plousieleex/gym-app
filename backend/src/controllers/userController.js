@@ -113,7 +113,8 @@ exports.deleteUserPermanentlyController = handleAsync(
 
 // USER ACTIVATION BY EMAIL (EMAIL SENDING IS HANDLING IN AUTH SERVICE)
 exports.activateAccountUserController = handleAsync(async (req, res, next) => {
-  const { activationToken } = req.params;
+  const activationToken = req.params.token;
+
   const { updatedUser, token } =
     await userService.activateAccountUserService(activationToken);
 
@@ -124,3 +125,8 @@ exports.activateAccountUserController = handleAsync(async (req, res, next) => {
     data: { updatedUser },
   });
 });
+
+// USER EMAIL ACTIVAION RESEND (IF TOKEN EXPIRED, USE THIS TO RESEND)
+exports.activationEmailResendController = handleAsync(
+  async (req, res, next) => {},
+);

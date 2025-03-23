@@ -8,3 +8,13 @@ exports.createPasswordResetToken = async () => {
     .digest('hex');
   return { resetToken, hashedToken };
 };
+
+exports.createActivationToken = async () => {
+  const activationToken = crypto.randomBytes(32).toString('hex');
+  const activationHashedToken = crypto
+    .createHash('sha256')
+    .update(activationToken)
+    .digest('hex');
+
+  return { activationToken, activationHashedToken };
+};

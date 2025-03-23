@@ -1,8 +1,18 @@
 const express = require('express');
 const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
+const { Pool } = require('pg');
 const morgan = require('morgan');
 const AppError = require('./utils/appError');
 const errorMiddleware = require('./middlewares/errorMiddleware');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+});
+
 // Routers
 
 const userRouter = require('./routes/userRoutes');
@@ -20,6 +30,10 @@ app.use(express.json());
 
 app.use(
   session({
+    store: new pgSession({
+      pool: pool,
+      tableName: 'sessions',
+    }),
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,

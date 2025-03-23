@@ -21,6 +21,7 @@ model users {
   passwordChangedAt      DateTime?
   userRole               UserRole               @default(USER)
   userActive             Boolean                @default(false)
+  isActivated            Boolean                @default(false)
   activationToken        String?
   activationTokenExpires DateTime?
   provider               String                 @default("local")
