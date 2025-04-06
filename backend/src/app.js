@@ -42,7 +42,7 @@ app.use(
 );
 
 // Routes (NOT ROUTERS)
-app.use('/api/v1/users', userRouter);
+// app.use('/api/v1/users', userRouter);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/oauth', oauthRouter);
 

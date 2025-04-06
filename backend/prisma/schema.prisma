@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum UserRole {
@@ -13,24 +14,27 @@ enum UserRole {
 }
 
 model users {
-  id                     Int                    @id @unique @default(autoincrement())
-  name_surname           String
-  email                  String                 @unique
-  password               String?
-  createdAt              DateTime               @default(now())
-  passwordChangedAt      DateTime?
-  userRole               UserRole               @default(USER)
-  userActive             Boolean                @default(false)
-  isActivated            Boolean                @default(false)
-  activationToken        String?
-  activationTokenExpires DateTime?
-  provider               String                 @default("local")
-  deletedAt              DateTime?
-  lastLogoutAt           DateTime?
-  passwordResetToken     String?
-  passwordResetExpires   DateTime?
-  user_profile           user_profile?
-  oauth_providers        user_oauth_providers[]
+  id                        Int                    @id @unique @default(autoincrement())
+  name_surname              String
+  email                     String                 @unique
+  phone_number              String                 @unique
+  password                  String?
+  createdAt                 DateTime               @default(now())
+  passwordChangedAt         DateTime?
+  userRole                  UserRole               @default(USER)
+  userActive                Boolean                @default(false)
+  isActivated               Boolean                @default(false)
+  activationToken           String?
+  activationTokenExpires    DateTime?
+  provider                  String                 @default("local")
+  loginSixDigitToken        String?
+  loginSixDigitTokenExpires DateTime?
+  deletedAt                 DateTime?
+  lastLogoutAt              DateTime?
+  passwordResetToken        String?
+  passwordResetExpires      DateTime?
+  user_profile              user_profile?
+  oauth_providers           user_oauth_providers[]
 
   @@map("users")
 }
