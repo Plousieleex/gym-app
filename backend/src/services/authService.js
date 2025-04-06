@@ -160,12 +160,11 @@ exports.sendSixDigitTokenToEmailService = async (email) => {
     throw new AppError('Please activate your account to login.', 400);
   }
 
-  try {
-    const { finalRandomCode, hashedFinalRandomCode } =
-      await resetTokens.createSixDigitToken();
-    console.log(finalRandomCode, hashedFinalRandomCode);
-    const loginCode = `Your login code is here: ${finalRandomCode}`;
+  const { finalRandomCode, hashedFinalRandomCode } =
+    await resetTokens.createSixDigitToken();
 
+  const loginCode = `Your login code is here: ${finalRandomCode}`;
+  try {
     user = await prisma.users.update({
       where: { id: user.id },
       data: {
@@ -175,15 +174,15 @@ exports.sendSixDigitTokenToEmailService = async (email) => {
         ).toISOString(),
       },
     });
-
-    await sendEmail({
-      email: user.email,
-      subject: 'Login Code',
-      message: `${loginCode}`,
-    });
   } catch (err) {
     throw new AppError('Cant send the code. Please try again later.', 500);
   }
+
+  await sendEmail({
+    email: user.email,
+    subject: 'Login Code',
+    message: `${loginCode}`,
+  });
 };
 /*
 const supabase = require('../utils/supabase');
