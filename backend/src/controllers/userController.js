@@ -1,4 +1,104 @@
 const handleAsync = require('../utils/handleAsync');
+const _ = require('lodash');
+const APIFeatures = require('../utils/apiFeatures');
+
+const userService = require('../services/userService');
+
+/*
+ * Forgot password controller.
+ * If user don't remember account's password, they will use this.
+ * Not for resetting, only for getting email.
+ * */
+exports.forgotPasswordUserController = handleAsync(async (req, res, next) => {
+  const email = req.body.email;
+  await userService.forgotPasswordUserService(email);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Password reset link sent to your email.',
+  });
+});
+
+exports.resetPasswordUserController = handleAsync(async (req, res, next) => {
+  const resetToken = req.params.token;
+
+  const { newPassword, newPasswordConfirm } = req.body;
+
+  const { updatedUser, token } = await userService.resetPasswordUserService(
+    resetToken,
+    newPassword,
+    newPasswordConfirm,
+  );
+
+  res.status(200).json({
+    status: 'success',
+    token,
+    data: {
+      user: _.omit(updatedUser, [
+        'password',
+        'id',
+        'createdAt',
+        'passwordChangedAt',
+        'userRole',
+        'passwordResetToken',
+        'passwordResetExpires',
+      ]),
+    },
+  });
+});
+
+exports.updatePasswordUserController = handleAsync(async (req, res, next) => {
+  const userID = req.user.id;
+  const { currentPassword, newPassword, newPasswordConfirm } = req.body;
+  const { updatedUser, token } = await userService.updatePasswordUserService(
+    userID,
+    currentPassword,
+    newPassword,
+    newPasswordConfirm,
+  );
+
+  res.status(200).json({
+    status: 'success',
+    token,
+    data: {
+      updatedUser,
+    },
+  });
+});
+
+exports.deactivateUserController = handleAsync(async (req, res, next) => {
+  const userID = req.user.id;
+
+  await userService.deactivateUserService(userID);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'User deactivated successfully.',
+  });
+});
+
+exports.deleteUserPermanentlyUserController = handleAsync(
+  async (req, res, next) => {
+    const userID = req.user.id;
+
+    await userService.deleteUserPermanentlyUserService(userID);
+
+    res.status(204).json({
+      status: 'success',
+      message: 'User deleted permanently.',
+      data: null,
+    });
+  },
+);
+
+exports.changeEmailUserController = handleAsync(async (req, res, next) => {
+  const userID = req.user.id;
+  const { currentEmail, newEmail } = req.body;
+
+  await userService.changeEmailUserService(currentEmail, newEmail, userID);
+});
+/*
+const handleAsync = require('../utils/handleAsync');
 const APIFeatures = require('../utils/apiFeatures');
 
 const userService = require('../services/userService');
@@ -130,3 +230,4 @@ exports.activateAccountUserController = handleAsync(async (req, res, next) => {
 exports.activationEmailResendController = handleAsync(
   async (req, res, next) => {},
 );
+*/

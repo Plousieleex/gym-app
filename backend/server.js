@@ -1,4 +1,5 @@
 const dotenv = require('dotenv');
+const prisma = require('../backend/src/config/db');
 require('./jobs/deleteInactiveUsers');
 
 /* process.on('uncaughtException', () => {
