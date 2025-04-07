@@ -35,11 +35,12 @@ exports.signUpUsersAuthService = async ({
   password = await bcrypt.hash(password, 12);
   delete passwordConfirmation;
 
-  try {
-    const { finalRandomCode, hashedFinalRandomCode } =
-      await resetTokens.createSixDigitToken();
-    console.log(finalRandomCode, hashedFinalRandomCode);
+  const { finalRandomCode, hashedFinalRandomCode } =
+    await resetTokens.createSixDigitToken();
 
+  const activationSixDigitToken = `Activation Code ${finalRandomCode}`;
+
+  try {
     const newUser = await prisma.users.create({
       data: {
         name_surname,
@@ -51,8 +52,6 @@ exports.signUpUsersAuthService = async ({
       },
     });
 
-    const activationSixDigitToken = `Activation Code ${finalRandomCode}`;
-
     await sendEmail({
       email: newUser.email,
       subject: 'Activation Code.',
@@ -62,7 +61,7 @@ exports.signUpUsersAuthService = async ({
     return { newUser };
   } catch (err) {
     await prisma.users.deleteMany({ where: { email: email } });
-    console.log(err.code);
+
     throw new AppError('User creation failed. Try again later.', 500);
   }
 };
@@ -166,7 +165,7 @@ exports.sendSixDigitTokenToEmailService = async (email) => {
   const loginCode = `Your login code is here: ${finalRandomCode}`;
   try {
     user = await prisma.users.update({
-      where: { id: user.id },
+      where: { id: user },
       data: {
         loginSixDigitToken: hashedFinalRandomCode,
         loginSixDigitTokenExpires: new Date(
@@ -174,15 +173,15 @@ exports.sendSixDigitTokenToEmailService = async (email) => {
         ).toISOString(),
       },
     });
+
+    await sendEmail({
+      email: user.email,
+      subject: 'Login Code',
+      message: `${loginCode}`,
+    });
   } catch (err) {
     throw new AppError('Cant send the code. Please try again later.', 500);
   }
-
-  await sendEmail({
-    email: user.email,
-    subject: 'Login Code',
-    message: `${loginCode}`,
-  });
 };
 /*
 const supabase = require('../utils/supabase');
