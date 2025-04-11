@@ -1,18 +1,14 @@
-import React from "react";
-import { View, Text, Button } from "react-native";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../types/navigation";
+import { StyleSheet, Text, View } from 'react-native'
+import React from 'react'
 
-type Props = NativeStackScreenProps<RootStackParamList, "HomeScreen">;
-
-const HomeScreen: React.FC<Props> = ({ navigation }) => {
- 
+const Index = () => {
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text>Hoş geldiniz! 🎉</Text>
-      
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Text>Hello Canboteus Aurelius</Text>
     </View>
-  );
-};
+  )
+}
 
-export default HomeScreen;
+export default Index
+
+const styles = StyleSheet.create({})
