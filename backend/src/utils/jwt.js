@@ -24,6 +24,3 @@ exports.signTokenGoogle = (id, userEmail) => {
   );
 };
 
-exports.verifyToken = async (token) => {
-  return await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-};

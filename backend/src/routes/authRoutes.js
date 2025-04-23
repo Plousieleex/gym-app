@@ -11,8 +11,12 @@ router
   .post(authController.loginAuthWithPhoneNumberController);
 
 router
+  .route('/sendLoginEmailCode')
+  .post(authController.sendSixDigitTokenToEmailLoginController);
+
+router
   .route('/loginEmailCode')
-  .post(authController.sendSixDigitTokenToEmailController);
+  .post(authController.checkSixDigitTokenLoginController);
 
 module.exports = router;
 

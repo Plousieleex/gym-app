@@ -165,7 +165,7 @@ exports.sendSixDigitTokenToEmailService = async (email) => {
   const loginCode = `Your login code is here: ${finalRandomCode}`;
   try {
     user = await prisma.users.update({
-      where: { id: user },
+      where: { id: user.id },
       data: {
         loginSixDigitToken: hashedFinalRandomCode,
         loginSixDigitTokenExpires: new Date(
@@ -182,6 +182,55 @@ exports.sendSixDigitTokenToEmailService = async (email) => {
   } catch (err) {
     throw new AppError('Cant send the code. Please try again later.', 500);
   }
+};
+
+// CHECK SIX DIGIT CODE FOR LOGIN (SERVICE)
+exports.checkSixDigitTokenLoginService = async (sixDigitToken) => {
+  if (!sixDigitToken) {
+    throw new AppError('Please provide your code.', 400);
+  }
+
+  const hashedSixDigitToken = crypto
+    .createHash('sha256')
+    .update(sixDigitToken)
+    .digest('hex');
+
+  let user = await prisma.users.findFirst({
+    where: {
+      loginSixDigitToken: hashedSixDigitToken,
+      loginSixDigitTokenExpires: { gte: new Date() },
+    },
+  });
+
+  if (!user) {
+    throw new AppError('Code is invalid or expired.', 401);
+  }
+
+  if (!user.isActivated) {
+    throw new AppError('Please activate your account.', 401);
+  }
+
+  if (!user.userActive) {
+    try {
+      user = await prisma.users.update({
+        where: { id: user.id },
+        data: {
+          userActive: true,
+          deletedAt: null,
+          lastLogoutAt: null,
+        },
+      });
+    } catch (err) {
+      throw new AppError(
+        'Error occured trying to activate user. Try again later.',
+        400,
+      );
+    }
+  }
+
+  const token = jwt.signTokenLocal(user.id, user.userRole);
+
+  return { user, token };
 };
 /*
 const supabase = require('../utils/supabase');

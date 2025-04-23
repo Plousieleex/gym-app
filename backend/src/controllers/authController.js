@@ -58,7 +58,7 @@ exports.loginAuthWithPhoneNumberController = handleAsync(
 
 // SEND SIX DIGIT CODE FOR LOGIN
 // USES EMAIL SERVICE TO SEND TOKEN
-exports.sendSixDigitTokenToEmailController = handleAsync(
+exports.sendSixDigitTokenToEmailLoginController = handleAsync(
   async (req, res, next) => {
     const email = req.body.email;
 
@@ -67,6 +67,22 @@ exports.sendSixDigitTokenToEmailController = handleAsync(
     res.status(201).json({
       status: 'success',
       message: 'Login code sent.',
+    });
+  },
+);
+
+// CHECK SIX DIGIT CODE FOR LOGIN
+exports.checkSixDigitTokenLoginController = handleAsync(
+  async (req, res, next) => {
+    const sixDigitToken = req.body.token;
+
+    const { user, token } =
+      await authService.checkSixDigitTokenLoginService(sixDigitToken);
+
+    res.status(200).json({
+      status: 'success',
+      token,
+      data: { user },
     });
   },
 );
