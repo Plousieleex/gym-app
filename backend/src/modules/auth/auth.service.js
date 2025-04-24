@@ -82,32 +82,40 @@ exports.loginWithEmailAuthService = async (email, password) => {
     throw new AppError('Please provide an email or password.', 400);
   }
 
-  const user = await prisma.users.findUnique({
+  const userRecord = await prisma.users.findUnique({
     where: { email },
   });
 
-  if (!user || !(await bcrypt.compare(password, user.password))) {
+  if (!userRecord || !(await bcrypt.compare(password, userRecord.password))) {
     throw new AppError('Invalid email or password.', 401);
   }
 
-  if (!user.isActivated) {
+  if (!userRecord.isActivated) {
     throw new AppError('Please activate your account.', 400);
   }
 
-  if (!user.userActive) {
-    user = await prisma.users.update({
-      where: { id: user.id },
-      data: {
-        userActive: true,
-        deletedAt: null,
-        lastLogoutAt: null,
-      },
-    });
+  let userToReturn = userRecord;
+  if (!userRecord.userActive) {
+    try {
+      userToReturn = await prisma.users.update({
+        where: { id: userRecord.id },
+        data: {
+          userActive: true,
+          deletedAt: null,
+          lastLogoutAt: null,
+        },
+      });
+    } catch (e) {
+      throw new AppError(
+        'Error occured when trying to activate user. Try again later.',
+        500,
+      );
+    }
   }
 
-  const token = jwt.signTokenLocal(user.id, user.userRole);
+  const token = jwt.signTokenLocal(userToReturn.id, userToReturn.userRole);
 
-  return { user, token };
+  return { user: userToReturn, token };
 };
 
 exports.loginWithPhoneNumberAuthService = async (phone_number, password) => {
@@ -115,32 +123,40 @@ exports.loginWithPhoneNumberAuthService = async (phone_number, password) => {
     throw new AppError('Please provide a phone number and password.', 400);
   }
 
-  const user = await prisma.users.findUnique({
+  const userRecord = await prisma.users.findUnique({
     where: { phone_number },
   });
 
-  if (!user || !(await bcrypt.compare(password, user.password))) {
+  if (!userRecord || !(await bcrypt.compare(password, userRecord.password))) {
     throw new AppError('Invalid phone number or password.', 401);
   }
 
-  if (!user.isActivated) {
+  if (!userRecord.isActivated) {
     throw new AppError('Please activate your account to login.', 401);
   }
 
-  if (!user.userActive) {
-    const updatedUser = await prisma.users.update({
-      where: { id: user.id },
-      data: {
-        userActive: true,
-        deletedAt: null,
-        lastLogoutAt: null,
-      },
-    });
+  let userToReturn = userRecord;
+  if (!userRecord.userActive) {
+    try {
+      userToReturn = await prisma.users.update({
+        where: { id: user.id },
+        data: {
+          userActive: true,
+          deletedAt: null,
+          lastLogoutAt: null,
+        },
+      });
+    } catch (e) {
+      throw new AppError(
+        'Error occured when trying to activate user. Try again later.',
+        500,
+      );
+    }
   }
 
-  const token = jwt.signTokenLocal(user.id, user.userRole);
+  const token = jwt.signTokenLocal(userToReturn.id, userToReturn.userRole);
 
-  return { user, token };
+  return { user: userToReturn, token };
 };
 
 exports.sendSixDigitTokenToEmail = async (email) => {
@@ -199,24 +215,25 @@ exports.checkSixDigitTokenForLoginService = async (sixDigitToken) => {
     .update(sixDigitToken)
     .digest('hex');
 
-  const user = await prisma.users.findFirst({
+  const userRecord = await prisma.users.findFirst({
     where: {
       loginSixDigitToken: hashedSixDigitToken,
       loginSixDigitTokenExpires: { gte: new Date() },
     },
   });
 
-  if (!user) {
+  if (!userRecord) {
     throw new AppError('Code is invalid or expired.', 401);
   }
 
-  if (!user.isActivated) {
+  if (!userRecord.isActivated) {
     throw new AppError('Please activate your account.', 401);
   }
 
-  if (!user.userActive) {
+  let userToReturn = userRecord;
+  if (!userRecord.userActive) {
     try {
-      user = await prisma.users.update({
+      userToReturn = await prisma.users.update({
         where: { id: user.id },
         data: {
           userActive: true,
@@ -234,5 +251,5 @@ exports.checkSixDigitTokenForLoginService = async (sixDigitToken) => {
 
   const token = jwt.signTokenLocal(user.id, user.userRole);
 
-  return { user, token };
+  return { user: userToReturn, token };
 };
