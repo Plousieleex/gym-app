@@ -1,19 +1,35 @@
 import React, { useEffect, useState } from "react";
-import { Link, NavigationContainer } from "@react-navigation/native";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import LoginScreen from "./login";
-import HomeScreen from "./screens/home";
-import { RootStackParamList } from "../types/navigation";
-
-import { View, Text, Button } from "react-native";
+import { View, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 
 export default function App() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  return (
-   <View>
-      <Button onPress={() => router.navigate('/register')} title="Go To Register" />
-   </View>
-  );
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = await SecureStore.getItemAsync("auth_token");
+      if (token) {
+        setIsLoggedIn(true);
+        router.replace("/screens/home"); // Ana sayfaya yönlendir
+      } else {
+        router.replace("/login"); // Login sayfasına yönlendir
+      }
+      setIsLoading(false);
+    };
+
+    checkAuth();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
+  return null; // Yönlendirme tamamlandıktan sonra bu bileşen görünmez.
 }

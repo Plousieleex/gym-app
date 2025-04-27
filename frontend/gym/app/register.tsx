@@ -1,7 +1,11 @@
 import { Button, StyleSheet, Text, TextInput, View } from 'react-native'
 import React from 'react'
+import { useRouter } from 'expo-router'
 
 export default function Register() {
+    const router = useRouter();
+    const [isSuccess, setIsSuccess] = React.useState(true)
+
     const [nameSurname, setNameSurname] = React.useState('')
     const [email, setEmail] = React.useState('')
     const [phone, setPhone] = React.useState('')
@@ -15,26 +19,29 @@ export default function Register() {
     const handlePasswordAgainChange = (text: string) => setPasswordAgain(text)
 
     const handleRegister = () => {
-        fetch('http://10.0.2.2:3000/Api/v1/auth/signup', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                name_surname: nameSurname,
-                email,
-                phone_number: phone,
-                password,
-                passwordConfirmation: passwordAgain,
-            }),
-        })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Success:', data);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
+        // fetch('http://10.0.2.2:3000/Api/v1/auth/signup', {
+        //     method: 'POST',
+        //     headers: {
+        //         'Content-Type': 'application/json',
+        //     },
+        //     body: JSON.stringify({
+        //         name_surname: nameSurname,
+        //         email,
+        //         phone_number: phone,
+        //         password,
+        //         passwordConfirmation: passwordAgain,
+        //     }),
+        // })
+        //     .then(response => response.json())
+        //     .then(data => {
+        //         console.log('Success:', data);
+        //     })
+        //     .catch(error => {
+        //         console.error('Error:', error);
+        //     });
+        if (isSuccess) {
+            router.push('/verify')
+        }
     }
 
     return (
@@ -76,7 +83,9 @@ export default function Register() {
                 autoComplete='password'
                 onChange={(e) => handlePasswordAgainChange(e.nativeEvent.text)}
             />
-            <Button onPress={() => handleRegister()} title='Register' />
+            <View style={{ width: '80%', marginTop: 20 }}>
+                <Button onPress={() => handleRegister()} title='Register' />
+            </View>
         </View>
     )
 }
