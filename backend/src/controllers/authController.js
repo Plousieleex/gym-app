@@ -76,8 +76,9 @@ exports.checkSixDigitTokenLoginController = handleAsync(
   async (req, res, next) => {
     const sixDigitToken = req.body.token;
 
-    const { user, token } =
-      await authService.checkSixDigitTokenLoginService(sixDigitToken);
+    const { user, token } = await authService.checkSixDigitTokenLoginService(
+      sixDigitToken,
+    );
 
     res.status(200).json({
       status: 'success',

@@ -15,9 +15,10 @@ enum UserRole {
 
 model users {
   id                        Int                    @id @unique @default(autoincrement())
-  name_surname              String
+  name_surname              String?
   email                     String                 @unique
   phone_number              String                 @unique
+  username                  String                 @unique 
   password                  String?
   createdAt                 DateTime               @default(now())
   passwordChangedAt         DateTime?
@@ -33,6 +34,8 @@ model users {
   lastLogoutAt              DateTime?
   passwordResetToken        String?
   passwordResetExpires      DateTime?
+  emailChangeToken          String?
+  emailChangeExpires        DateTime?
   user_profile              user_profile?
   oauth_providers           user_oauth_providers[]
 
@@ -40,20 +43,20 @@ model users {
 }
 
 model user_profile {
-  userId                Int      @unique
+  userId                Int      @id @unique
   user                  users    @relation(fields: [userId], references: [id])
-  username              String   @unique
   height                Int
   weight                Int
-  body_mass_index       Int
+  age                   Int
+  body_mass_index       Float
   training_experience   String
-  training_aim          String
+  training_aim          String[]
   user_sex              String   @db.Char(1)
   training_duration     Int
-  birthdate             DateTime
-  social_media_accounts String[]
-  biography             String
-  profile_img           String
+  birthdate             DateTime?
+  social_media_accounts String?
+  biography             String?
+  profile_img           String?
 
   @@map("user_profiles")
 }

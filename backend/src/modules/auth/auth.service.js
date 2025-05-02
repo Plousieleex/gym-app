@@ -23,6 +23,7 @@ exports.signUpAuthService = async ({
   name_surname,
   phone_number,
   email,
+  username,
   password,
   passwordConfirmation,
 }) => {
@@ -57,6 +58,7 @@ exports.signUpAuthService = async ({
         name_surname,
         email,
         phone_number,
+        username,
         password,
         activationToken: hashedFinalRandomCode,
         activationTokenExpires: new Date(Date.now() + 10 * 60 * 1000),
@@ -139,7 +141,7 @@ exports.loginWithPhoneNumberAuthService = async (phone_number, password) => {
   if (!userRecord.userActive) {
     try {
       userToReturn = await prisma.users.update({
-        where: { id: user.id },
+        where: { id: userRecord.id },
         data: {
           userActive: true,
           deletedAt: null,
@@ -234,7 +236,7 @@ exports.checkSixDigitTokenForLoginService = async (sixDigitToken) => {
   if (!userRecord.userActive) {
     try {
       userToReturn = await prisma.users.update({
-        where: { id: user.id },
+        where: { id: userRecord.id },
         data: {
           userActive: true,
           deletedAt: null,
@@ -249,7 +251,20 @@ exports.checkSixDigitTokenForLoginService = async (sixDigitToken) => {
     }
   }
 
-  const token = jwt.signTokenLocal(user.id, user.userRole);
+  const token = jwt.signTokenLocal(userToReturn.id, userToReturn.userRole);
 
   return { user: userToReturn, token };
+};
+
+exports.changedPasswordAfterAuthService = async (id, iat) => {
+  const user = prisma.users.findUnique({
+    where: { id },
+    select: { passwordChangedAt: true },
+  });
+
+  if (!user?.passwordChangedAt) return false;
+
+  const changedTimeStamp = Math.floor(user.passwordChangedAt.getTime() / 1000);
+
+  return iat < changedTimeStamp;
 };

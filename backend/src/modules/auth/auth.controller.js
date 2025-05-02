@@ -7,6 +7,7 @@ exports.signUpAuthController = handleAsync(async (req, res, next) => {
     name_surname: req.body.name_surname,
     email: req.body.email,
     phone_number: req.body.phone_number,
+    username: req.body.username,
     password: req.body.password,
     passwordConfirmation: req.body.passwordConfirmation,
   });
@@ -15,9 +16,7 @@ exports.signUpAuthController = handleAsync(async (req, res, next) => {
     status: 'success',
     message:
       'User signed up successfully. Please activate your account via activation code.',
-    data: {
-      newUser,
-    },
+    data: newUser,
   });
 });
 

@@ -15,8 +15,8 @@ const pool = new Pool({
 
 // Routers
 
-const userRouter = require('./routes/userRoutes');
-const authRouter = require('./routes/authRoutes');
+const userRouter = require('./modules/user/user.routes');
+const authRouter = require('./modules/auth/auth.routes');
 const oauthRouter = require('./routes/oauthRoutes');
 
 const app = express();
@@ -42,7 +42,7 @@ app.use(
 );
 
 // Routes (NOT ROUTERS)
-// app.use('/api/v1/users', userRouter);
+app.use('/api/v1/users', userRouter);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/oauth', oauthRouter);
 
