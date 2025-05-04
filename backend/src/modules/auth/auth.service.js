@@ -33,6 +33,8 @@ exports.signUpAuthService = async ({
     },
   });
 
+  // Special error for useractive
+
   if (existingUser) {
     throw new AppError(
       'User already exists with this email or phone number.',
@@ -267,4 +269,47 @@ exports.changedPasswordAfterAuthService = async (id, iat) => {
   const changedTimeStamp = Math.floor(user.passwordChangedAt.getTime() / 1000);
 
   return iat < changedTimeStamp;
+};
+
+exports.checkSixDigitTokenForActivateUser = async (sixDigitToken) => {
+  if (!sixDigitToken) {
+    throw new AppError('Please provide your code.', 400);
+  }
+
+  const hashedSixDigitToken = crypto
+    .createHash('sha256')
+    .update(sixDigitToken)
+    .digest('hex');
+
+  const userRecord = await prisma.users.findFirst({
+    where: {
+      activationToken: hashedSixDigitToken,
+      activationTokenExpires: { gte: new Date() },
+    },
+  });
+
+  if (!userRecord) {
+    throw new AppError('Code is invalid or expired.', 404);
+  }
+
+  try {
+    const activatedUser = await prisma.users.update({
+      where: { id: userRecord.id },
+      data: {
+        isActivated: true,
+        userActive: true,
+        activationToken: null,
+        activationTokenExpires: null,
+      },
+    });
+
+    const token = jwt.signTokenLocal(activatedUser.id, activatedUser.userRole);
+
+    return { user: activatedUser, token };
+  } catch (e) {
+    throw new AppError(
+      'Error occured while activating user. Try again later.',
+      500,
+    );
+  }
 };

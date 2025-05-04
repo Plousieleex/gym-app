@@ -5,6 +5,9 @@ const authMiddleware = require('./auth.middleware');
 const router = express.Router();
 
 router.route('/signup').post(authController.signUpAuthController);
+router
+  .route('/signup/activate')
+  .post(authController.checkSixDigitTokenForActivateUser);
 
 router.route('/loginEmail').post(authController.loginWithEmailController);
 router.route('/loginPhone').post(authController.loginWithPhoneNumberController);
