@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { View, Text, Button, Linking, TextInput, StyleSheet } from "react-native";
+import * as SecureStore from "expo-secure-store";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../types/navigation";
 import { navigate } from "expo-router/build/global-state/routing";
@@ -10,17 +11,41 @@ type Props = NativeStackScreenProps<RootStackParamList, "LoginScreen">;
 const LoginScreen: React.FC<Props> = ({ }) => {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
-  const [isSuccess, setIsSuccess] = React.useState(true);
+  const [isSuccess, setIsSuccess] = React.useState(false);
   const [showError, setShowError] = React.useState(false);
 
   const router = useRouter();
 
   const handleEmailChange = (text: string) => setEmail(text);
   const handlePasswordChange = (text: string) => setPassword(text);
-  const handleLogin = () => {
+  const handleLogin = async () => {
+    fetch('http://10.0.2.2:3000/Api/v1/auth/loginEmail', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: email,
+        password: password,
+      }),
+    })
+      .then(response => response.json())
+      .then(async data => {
+        console.log('Success:', data);
+        if (data.token) {
+          await SecureStore.setItemAsync('auth_token', data.token);
+          setIsSuccess(true);
+        } else {
+          setIsSuccess(false);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
     if (isSuccess) {
-      router.push("/screens/home");
-    } else {
+      router.push('/screens/home');
+    }
+    else {
       setShowError(true);
     }
   }

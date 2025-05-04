@@ -11,13 +11,14 @@ export default function App() {
   useEffect(() => {
     const checkAuth = async () => {
       const token = await SecureStore.getItemAsync("auth_token");
+     
       if (token) {
-        setIsLoggedIn(true);
-        router.replace("/screens/home"); // Ana sayfaya yönlendir
+        setTimeout(() => router.replace("/screens/home"), 0);
+        return;
       } else {
-        router.replace("/login"); // Login sayfasına yönlendir
+        setTimeout(() => router.replace("/login"), 0);
+        return;
       }
-      setIsLoading(false);
     };
 
     checkAuth();

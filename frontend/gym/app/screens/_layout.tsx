@@ -7,9 +7,7 @@ const ScreensLayout = () => {
             <Tabs.Screen name='settings' options={{
                 title: 'Settings',
             }} />
-            <Tabs.Screen name='test2' options={{
-                title: 'Test Page',
-            }} />
+
         </Tabs>
     )
 }
