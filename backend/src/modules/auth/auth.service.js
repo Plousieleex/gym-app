@@ -271,7 +271,7 @@ exports.changedPasswordAfterAuthService = async (id, iat) => {
   return iat < changedTimeStamp;
 };
 
-exports.checkSixDigitTokenForActivateUser = async (sixDigitToken) => {
+exports.checkSixDigitTokenForActivateUser = async (userID, sixDigitToken) => {
   if (!sixDigitToken) {
     throw new AppError('Please provide your code.', 400);
   }
@@ -281,14 +281,15 @@ exports.checkSixDigitTokenForActivateUser = async (sixDigitToken) => {
     .update(sixDigitToken)
     .digest('hex');
 
-  const userRecord = await prisma.users.findFirst({
-    where: {
-      activationToken: hashedSixDigitToken,
-      activationTokenExpires: { gte: new Date() },
-    },
+  const userRecord = await prisma.users.findUnique({
+    where: { id: userID },
   });
 
-  if (!userRecord) {
+  if (
+    !userRecord ||
+    userRecord.activationToken !== hashedSixDigitToken ||
+    userRecord.activationTokenExpires < new Date()
+  ) {
     throw new AppError('Code is invalid or expired.', 404);
   }
 

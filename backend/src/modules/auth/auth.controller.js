@@ -77,9 +77,11 @@ exports.checkSixDigitTokenForLoginController = handleAsync(
 
 exports.checkSixDigitTokenForActivateUser = handleAsync(
   async (req, res, next) => {
+    const userID = req.body.id;
     const sixDigitToken = req.body.token;
 
     const { user, token } = await authService.checkSixDigitTokenForActivateUser(
+      userID,
       sixDigitToken,
     );
 
