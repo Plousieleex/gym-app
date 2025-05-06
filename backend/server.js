@@ -1,19 +1,16 @@
-const dotenv = require('dotenv');
-const prisma = require('../backend/src/config/db');
-require('./jobs/deleteInactiveUsers');
+import dotenv from 'dotenv';
+import prisma from '../backend/src/config/db.js';
 
-/* process.on('uncaughtException', () => {
+process.on('uncaughtException', () => {
   process.exit(1);
-}); */
+});
 
-dotenv.config({ path: './.env' });
-const app = require('./src/app');
+dotenv.config({ path: './env' });
+import app from '../backend/src/app.js';
 
-const port = process.env.PORT || 3000;
-
-const server = app.listen(port, () => {
-  // DELETE THIS CONSOLE.LOG ON PRODUCTION
-  console.log(`Listening on ${port}`);
+const PORT = process.env.PORT || 3000;
+const server = app.listen(PORT, () => {
+  console.log(`Listening on ${PORT}`);
 });
 
 process.on('unhandledRejection', (err) => {

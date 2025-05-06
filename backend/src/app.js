@@ -1,37 +1,39 @@
-const express = require('express');
-const session = require('express-session');
-const pgSession = require('connect-pg-simple')(session);
-const { Pool } = require('pg');
-const morgan = require('morgan');
-const AppError = require('./utils/appError');
-const errorMiddleware = require('./middlewares/errorMiddleware');
+import express from 'express';
+import session from 'express-session';
+import connectPgSimple from 'connect-pg-simple';
+import pg from 'pg';
+const { Pool } = pg;
+import morgan from 'morgan';
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
+import AppError from './utils/appError.js';
+import errorMiddleware from '../middlewares/errorMiddleware.js';
 
 // Routers
-
-const userRouter = require('./modules/user/user.routes');
-const authRouter = require('./modules/auth/auth.routes');
-const oauthRouter = require('./routes/oauthRoutes');
+import userRouter from './modules/user/user.routes.js';
+import authRouter from './modules/auth/auth.routes.js';
+import workoutRouter from './modules/workout/workout.routes.js';
 
 const app = express();
 
-// Middlewares
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-app.use(express.json());
+// PostgresSQL Session Store
+const PgSessionStore = connectPgSimple(session);
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
 
+// Middlewares
 app.use(
   session({
-    store: new pgSession({
-      pool: pool,
+    store: new PgSessionStore({
+      pool,
       tableName: 'sessions',
     }),
     secret: process.env.SESSION_SECRET,
@@ -41,16 +43,17 @@ app.use(
   }),
 );
 
-// Routes (NOT ROUTERS)
+// Routes
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/auth', authRouter);
-app.use('/api/v1/oauth', oauthRouter);
+app.use('/api/v1/workout', workoutRouter);
 
-// UNHANDLED ROUTE HANDLER
+// Unhandled Route
 app.all('*', (req, res, next) => {
   next(new AppError('PAGE NOT FOUND.', 404));
 });
 
+// Global Error Middleware
 app.use(errorMiddleware);
 
-module.exports = app;
+export default app;

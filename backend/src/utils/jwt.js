@@ -1,9 +1,8 @@
-const jwt = require('jsonwebtoken');
-const { type } = require('os');
-const AppError = require('./appError');
-const promisify = require('util').promisify;
+import jwt from 'jsonwebtoken';
+import AppError from './appError.js';
+import { promisify } from 'util';
 
-exports.signTokenLocal = (id, userRole) => {
+export function signTokenLocal(id, userRole) {
   return jwt.sign(
     { id: id, userRole: userRole, provider: 'local' },
     process.env.JWT_SECRET,
@@ -12,9 +11,9 @@ exports.signTokenLocal = (id, userRole) => {
       expiresIn: process.env.JWT_EXPIRES_IN,
     },
   );
-};
+}
 
-exports.signTokenGoogle = (id, userEmail) => {
+export function signTokenGoogle(id, userEmail) {
   return jwt.sign(
     {
       id: id,
@@ -24,9 +23,9 @@ exports.signTokenGoogle = (id, userEmail) => {
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN },
   );
-};
+}
 
-exports.signTokenPR = (id, userRole) => {
+export function signTokenPR(id, userRole) {
   return jwt.sign(
     { sub: id, userRole: userRole, provider: 'local', type: 'pw-reset' },
     process.env.JWT_SECRET,
@@ -35,9 +34,9 @@ exports.signTokenPR = (id, userRole) => {
       expiresIn: '5m',
     },
   );
-};
+}
 
-exports.verifyToken = async (token, expectedType) => {
+export async function verifyToken(token, expectedType) {
   let decoded;
   try {
     decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET, {
@@ -52,9 +51,9 @@ exports.verifyToken = async (token, expectedType) => {
   }
 
   return decoded;
-};
+}
 
-exports.protectVerifyToken = async (token) => {
+export async function protectVerifyToken(token) {
   let decoded;
   try {
     decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
@@ -63,4 +62,12 @@ exports.protectVerifyToken = async (token) => {
   }
 
   return decoded;
+}
+
+export default {
+  signTokenLocal,
+  signTokenGoogle,
+  signTokenPR,
+  verifyToken,
+  protectVerifyToken,
 };

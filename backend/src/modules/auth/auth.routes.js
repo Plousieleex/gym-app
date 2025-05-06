@@ -1,21 +1,25 @@
-const express = require('express');
-const authController = require('../auth/auth.controller');
-const authMiddleware = require('./auth.middleware');
+import { Router } from 'express';
+import authController from './auth.controller.js';
+import authMiddleware from './auth.middleware.js';
 
-const router = express.Router();
+const router = Router();
 
 router.route('/signup').post(authController.signUpAuthController);
 router
   .route('/signup/activate')
   .post(authController.checkSixDigitTokenForActivateUser);
 
-router.route('/loginEmail').post(authController.loginWithEmailController);
-router.route('/loginPhone').post(authController.loginWithPhoneNumberController);
-
-router.route('/sendCodeToEmail').post(authController.sendSixDigitTokenToEmail);
+router.route('/login/email').post(authController.loginWithEmailController);
+router
+  .route('/login/phone')
+  .post(authController.loginWithPhoneNumberController);
 
 router
-  .route('/checkCode')
+  .route('/login/sendcodetoemail')
+  .post(authController.sendSixDigitTokenToEmail);
+
+router
+  .route('/login/checkcode')
   .post(authController.checkSixDigitTokenForLoginController);
 
-module.exports = router;
+export default router;

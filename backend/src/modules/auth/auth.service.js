@@ -1,10 +1,10 @@
-const prisma = require('../../config/db');
-const bcrypt = require('bcrypt');
-const AppError = require('../../utils/appError');
-const jwt = require('../../utils/jwt');
-const crypto = require('crypto');
-const resetTokens = require('../../utils/resetTokens');
-const sendEmail = require('../../utils/email');
+import prisma from '../../config/db.js';
+import bcrypt from 'bcrypt';
+import AppError from '../../utils/appError.js';
+import jwt from '../../utils/jwt.js';
+import crypto from 'crypto';
+import resetTokens from '../../utils/resetTokens.js';
+import sendEmail from '../../utils/email.js';
 
 /* 
   Takes 5 arguments.
@@ -19,7 +19,7 @@ const sendEmail = require('../../utils/email');
   Throws when password is not equal to password confirmation
   
 */
-exports.signUpAuthService = async ({
+export const signUpAuthService = async ({
   name_surname,
   phone_number,
   email,
@@ -34,8 +34,13 @@ exports.signUpAuthService = async ({
   });
 
   // Special error for useractive
-
   if (existingUser) {
+    if (!existingUser.isActivated) {
+      throw new AppError(
+        'This user is exist but not activated. Please activate your account.',
+        401,
+      );
+    }
     throw new AppError(
       'User already exists with this email or phone number.',
       401,
@@ -47,7 +52,7 @@ exports.signUpAuthService = async ({
   }
 
   password = await bcrypt.hash(password, 12);
-  delete passwordConfirmation;
+  passwordConfirmation = null;
 
   const { finalRandomCode, hashedFinalRandomCode } =
     await resetTokens.createSixDigitToken();
@@ -81,7 +86,7 @@ exports.signUpAuthService = async ({
   }
 };
 
-exports.loginWithEmailAuthService = async (email, password) => {
+export const loginWithEmailAuthService = async (email, password) => {
   if (!email || !password) {
     throw new AppError('Please provide an email or password.', 400);
   }
@@ -122,7 +127,10 @@ exports.loginWithEmailAuthService = async (email, password) => {
   return { user: userToReturn, token };
 };
 
-exports.loginWithPhoneNumberAuthService = async (phone_number, password) => {
+export const loginWithPhoneNumberAuthService = async (
+  phone_number,
+  password,
+) => {
   if (!phone_number || !password) {
     throw new AppError('Please provide a phone number and password.', 400);
   }
@@ -163,7 +171,7 @@ exports.loginWithPhoneNumberAuthService = async (phone_number, password) => {
   return { user: userToReturn, token };
 };
 
-exports.sendSixDigitTokenToEmail = async (email) => {
+export const sendSixDigitTokenToEmail = async (email) => {
   if (!email) {
     throw new AppError('Please provide an email.', 400);
   }
@@ -209,7 +217,7 @@ exports.sendSixDigitTokenToEmail = async (email) => {
   }
 };
 
-exports.checkSixDigitTokenForLoginService = async (sixDigitToken) => {
+export const checkSixDigitTokenForLoginService = async (sixDigitToken) => {
   if (!sixDigitToken) {
     throw new AppError('Please provide your code.', 400);
   }
@@ -258,7 +266,7 @@ exports.checkSixDigitTokenForLoginService = async (sixDigitToken) => {
   return { user: userToReturn, token };
 };
 
-exports.changedPasswordAfterAuthService = async (id, iat) => {
+export const changedPasswordAfterAuthService = async (id, iat) => {
   const user = prisma.users.findUnique({
     where: { id },
     select: { passwordChangedAt: true },
@@ -271,7 +279,10 @@ exports.changedPasswordAfterAuthService = async (id, iat) => {
   return iat < changedTimeStamp;
 };
 
-exports.checkSixDigitTokenForActivateUser = async (userID, sixDigitToken) => {
+export const checkSixDigitTokenForActivateUser = async (
+  userID,
+  sixDigitToken,
+) => {
   if (!sixDigitToken) {
     throw new AppError('Please provide your code.', 400);
   }
@@ -290,7 +301,7 @@ exports.checkSixDigitTokenForActivateUser = async (userID, sixDigitToken) => {
     userRecord.activationToken !== hashedSixDigitToken ||
     userRecord.activationTokenExpires < new Date()
   ) {
-    throw new AppError('Code is invalid or expired.', 404);
+    throw new AppError('Code is invalid or expired.', 410);
   }
 
   try {
@@ -313,4 +324,14 @@ exports.checkSixDigitTokenForActivateUser = async (userID, sixDigitToken) => {
       500,
     );
   }
+};
+
+export default {
+  signUpAuthService,
+  loginWithEmailAuthService,
+  loginWithPhoneNumberAuthService,
+  sendSixDigitTokenToEmail,
+  checkSixDigitTokenForLoginService,
+  checkSixDigitTokenForActivateUser,
+  changedPasswordAfterAuthService,
 };

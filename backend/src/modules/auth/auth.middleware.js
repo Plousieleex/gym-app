@@ -1,10 +1,10 @@
-const prisma = require('../../config/db');
-const jwt = require('../../utils/jwt');
-const handleAsync = require('../../utils/handleAsync');
-const AppError = require('../../utils/appError');
-const authService = require('../auth/auth.service');
+import prisma from '../../config/db.js';
+import jwt from '../../utils/jwt.js';
+import handleAsync from '../../utils/handleAsync.js';
+import AppError from '../../utils/appError.js';
+import authService from './auth.service.js';
 
-exports.protect = handleAsync(async (req, res, next) => {
+export const protect = handleAsync(async (req, res, next) => {
   // 1) Getting token and check of it's exists
   let token;
   if (
@@ -56,3 +56,7 @@ exports.protect = handleAsync(async (req, res, next) => {
   req.user = currentUser;
   next();
 });
+
+export default {
+  protect,
+};

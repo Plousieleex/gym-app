@@ -1,4 +1,4 @@
-const prisma = require('../config/db');
+import prisma from '../config/db.js';
 
 const deepConvertNumber = (obj) => {
   Object.keys(obj).forEach((key) => {
@@ -10,7 +10,7 @@ const deepConvertNumber = (obj) => {
   });
 };
 
-class APIFeatures {
+export default class APIFeatures {
   constructor(model, queryString) {
     this.model = prisma[model];
     this.queryString = queryString;
@@ -87,5 +87,3 @@ class APIFeatures {
     return await this.model.findMany(this.options);
   }
 }
-
-module.exports = APIFeatures;

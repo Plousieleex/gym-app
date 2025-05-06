@@ -1,8 +1,9 @@
-const handleAsync = require('../../utils/handleAsync');
-const authService = require('./auth.service');
-const _ = require('lodash');
+import handleAsync from '../../utils/handleAsync.js';
+import authService from './auth.service.js';
+import _ from 'lodash';
 
-exports.signUpAuthController = handleAsync(async (req, res, next) => {
+export const signUpAuthController = handleAsync(async (req, res, next) => {
+  console.log(req.body);
   const newUser = await authService.signUpAuthService({
     name_surname: req.body.name_surname,
     email: req.body.email,
@@ -20,7 +21,7 @@ exports.signUpAuthController = handleAsync(async (req, res, next) => {
   });
 });
 
-exports.loginWithEmailController = handleAsync(async (req, res, next) => {
+export const loginWithEmailController = handleAsync(async (req, res, next) => {
   const { email, password } = req.body;
   const { user, token } = await authService.loginWithEmailAuthService(
     email,
@@ -34,21 +35,23 @@ exports.loginWithEmailController = handleAsync(async (req, res, next) => {
   });
 });
 
-exports.loginWithPhoneNumberController = handleAsync(async (req, res, next) => {
-  const { phone_number, password } = req.body;
-  const { user, token } = await authService.loginWithPhoneNumberAuthService(
-    phone_number,
-    password,
-  );
+export const loginWithPhoneNumberController = handleAsync(
+  async (req, res, next) => {
+    const { phone_number, password } = req.body;
+    const { user, token } = await authService.loginWithPhoneNumberAuthService(
+      phone_number,
+      password,
+    );
 
-  res.status(200).json({
-    status: 'success',
-    token,
-    data: { user },
-  });
-});
+    res.status(200).json({
+      status: 'success',
+      token,
+      data: { user },
+    });
+  },
+);
 
-exports.sendSixDigitTokenToEmail = handleAsync(async (req, res, next) => {
+export const sendSixDigitTokenToEmail = handleAsync(async (req, res, next) => {
   const email = req.body.email;
 
   await authService.sendSixDigitTokenToEmail(email);
@@ -59,7 +62,7 @@ exports.sendSixDigitTokenToEmail = handleAsync(async (req, res, next) => {
   });
 });
 
-exports.checkSixDigitTokenForLoginController = handleAsync(
+export const checkSixDigitTokenForLoginController = handleAsync(
   async (req, res, next) => {
     const sixDigitToken = req.body.token;
 
@@ -75,7 +78,7 @@ exports.checkSixDigitTokenForLoginController = handleAsync(
   },
 );
 
-exports.checkSixDigitTokenForActivateUser = handleAsync(
+export const checkSixDigitTokenForActivateUser = handleAsync(
   async (req, res, next) => {
     const userID = req.body.id;
     const sixDigitToken = req.body.token;
@@ -92,3 +95,12 @@ exports.checkSixDigitTokenForActivateUser = handleAsync(
     });
   },
 );
+
+export default {
+  signUpAuthController,
+  loginWithEmailController,
+  loginWithPhoneNumberController,
+  sendSixDigitTokenToEmail,
+  checkSixDigitTokenForLoginController,
+  checkSixDigitTokenForActivateUser,
+};

@@ -1,15 +1,15 @@
-const crypto = require('crypto');
+import crypto from 'crypto';
 
-exports.createPasswordResetToken = async () => {
+export async function createPasswordResetToken() {
   const resetToken = crypto.randomBytes(32).toString('hex');
   const hashedToken = crypto
     .createHash('sha256')
     .update(resetToken)
     .digest('hex');
   return { resetToken, hashedToken };
-};
+}
 
-exports.createActivationToken = async () => {
+export async function createActivationToken() {
   const activationToken = crypto.randomBytes(32).toString('hex');
   const activationHashedToken = crypto
     .createHash('sha256')
@@ -17,9 +17,9 @@ exports.createActivationToken = async () => {
     .digest('hex');
 
   return { activationToken, activationHashedToken };
-};
+}
 
-exports.createSixDigitToken = async () => {
+export async function createSixDigitToken() {
   const randomCode = crypto.randomInt(0, 1_000_000);
   const finalRandomCode = String(randomCode).padStart(6, '0');
 
@@ -29,4 +29,10 @@ exports.createSixDigitToken = async () => {
     .digest('hex');
 
   return { finalRandomCode, hashedFinalRandomCode };
+}
+
+export default {
+  createPasswordResetToken,
+  createActivationToken,
+  createSixDigitToken,
 };

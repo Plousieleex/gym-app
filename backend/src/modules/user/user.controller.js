@@ -1,9 +1,12 @@
-const handleAsync = require('../../utils/handleAsync');
+/* const handleAsync = require('../../utils/handleAsync');
 const _ = require('lodash');
 const APIFeatures = require('../../utils/apiFeatures');
-const userService = require('../user/user.service');
+const userService = require('../user/user.service'); */
+import handleAsync from '../../utils/handleAsync.js';
+import APIFeatures from '../../utils/apiFeatures.js';
+import userService from './user.service.js';
 
-exports.createUserProfile = handleAsync(async (req, res, next) => {
+export const createUserProfile = handleAsync(async (req, res, next) => {
   const userID = req.user.id;
 
   const newProfile = await userService.createUserProfile({
@@ -27,3 +30,7 @@ exports.createUserProfile = handleAsync(async (req, res, next) => {
     data: newProfile,
   });
 });
+
+export default {
+  createUserProfile,
+};

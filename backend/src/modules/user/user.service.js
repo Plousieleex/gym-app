@@ -1,14 +1,14 @@
-const prisma = require('../../config/db');
-const bcrypt = require('bcrypt');
-const crypto = require('crypto');
-const AppError = require('../../utils/appError');
-const jwt = require('../../utils/jwt');
-const sendEmail = require('../../utils/email');
-const resetTokens = require('../../utils/resetTokens');
-const calculateBMI = require('../../utils/bmiCalculator');
+import prisma from '../../config/db.js';
+import bcrypt from 'bcrypt';
+import crypto from 'crypto';
+import AppError from '../../utils/appError.js';
+import jwt from '../../utils/jwt.js';
+import sendEmail from '../../utils/email.js';
+import resetTokens from '../../utils/resetTokens.js';
+import calculateBMI from '../../utils/bmiCalculator.js';
 
 // Forgot Password
-exports.forgotPasswordUserService = async (email) => {
+export const forgotPasswordUserService = async (email) => {
   const userRecord = await prisma.users.findUnique({
     where: { email },
   });
@@ -46,7 +46,7 @@ exports.forgotPasswordUserService = async (email) => {
   }
 };
 
-exports.verifyResetTokenService = async (resetToken) => {
+export const verifyResetTokenService = async (resetToken) => {
   const hashedToken = crypto
     .createHash('sha256')
     .update(resetToken)
@@ -72,7 +72,7 @@ exports.verifyResetTokenService = async (resetToken) => {
   }
 };
 
-exports.resetPasswordService = async (
+export const resetPasswordService = async (
   resetSessionToken,
   newPassword,
   confirmPassword,
@@ -114,7 +114,7 @@ exports.resetPasswordService = async (
 };
 
 // NOT COMPLETED
-exports.updatePasswordUserService = async (
+export const updatePasswordUserService = async (
   userID,
   currentPassword,
   newPassword,
@@ -136,9 +136,11 @@ exports.updatePasswordUserService = async (
   }
 
   const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+  // NOT COMPLETED
 };
 
-exports.createUserProfile = async ({
+export const createUserProfile = async ({
   userID,
   height,
   weight,
@@ -192,4 +194,12 @@ exports.createUserProfile = async ({
       500,
     );
   }
+};
+
+export default {
+  forgotPasswordUserService,
+  verifyResetTokenService,
+  resetPasswordService,
+  updatePasswordUserService,
+  createUserProfile,
 };

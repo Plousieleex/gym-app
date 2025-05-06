@@ -18,7 +18,7 @@ model users {
   name_surname              String?
   email                     String                 @unique
   phone_number              String                 @unique
-  username                  String                 @unique 
+  username                  String                 @unique
   password                  String?
   createdAt                 DateTime               @default(now())
   passwordChangedAt         DateTime?
@@ -38,20 +38,22 @@ model users {
   emailChangeExpires        DateTime?
   user_profile              user_profile?
   oauth_providers           user_oauth_providers[]
+  ownedWorkouts             workout[]              @relation("WorkoutCreator")
+  joinedWorkouts            workout[]              @relation("WorkoutParticipants")
 
   @@map("users")
 }
 
 model user_profile {
-  userId                Int      @id @unique
-  user                  users    @relation(fields: [userId], references: [id])
+  userId                Int       @id @unique
+  user                  users     @relation(fields: [userId], references: [id])
   height                Int
   weight                Int
   age                   Int
   body_mass_index       Float
   training_experience   String
   training_aim          String[]
-  user_sex              String   @db.Char(1)
+  user_sex              String    @db.Char(1)
   training_duration     Int
   birthdate             DateTime?
   social_media_accounts String?
@@ -77,4 +79,47 @@ model user_oauth_providers {
 
   @@unique([provider, provider_id])
   @@map("user_oath_providers")
+}
+
+model workout {
+  id                  Int             @id @default(autoincrement())
+  title               String
+  workout_description String?
+  workout_level       Int?
+  workout_aim         String?
+  workout_duration    Int? // How much days in 1 week?
+  workout_routine     Int? // (6 to 8 weeks / 8 to 12 weeks / 12 weeks)
+  creator             users           @relation("WorkoutCreator", fields: [creatorId], references: [id])
+  creatorId           Int 
+  isPublic            Boolean         @default(false)
+  participants        users[]         @relation("WorkoutParticipants")
+  daily_routine       daily_routine[]
+  workout_img         String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  @@map("workouts")
+}
+
+model daily_routine {
+  id                  Int        @id @default(autoincrement())
+  title               String
+  routine_description String?
+  routine_img         String?
+  workout             workout    @relation(fields: [workoutId], references: [id])
+  workoutId           Int
+  exercises           exercise[]
+}
+
+model exercise {
+  id               Int           @id @default(autoincrement())
+  exercise_title   String
+  exercise_img     String
+  exercise_vid     String
+  exercise_aim_img String
+  sets             Int
+  reps             Int
+  restSeconds      Int?
+  daily_routine    daily_routine @relation(fields: [dailyRoutineId], references: [id])
+  dailyRoutineId   Int
 }
