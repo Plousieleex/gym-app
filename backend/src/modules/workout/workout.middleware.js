@@ -1,12 +1,29 @@
-import Joi from 'joi';
+import handleAsync from '../../utils/handleAsync.js';
 
-export const workoutSchema = Joi.object({
-  title: Joi.string().min(3).max(100).required(),
-  workout_description: Joi.string(),
-  workout_level: Joi.number(),
-  workout_aim: Joi.string(),
-  workout_duration: Joi.number(),
-  workout_routine: Joi.number(),
-  isPublic: Joi.bool(),
-  workout_img: Joi.string(),
-});
+export const validateUpdateSchema = (schema) =>
+  handleAsync(async (req, res, next) => {
+    const result = schema.safeParse(req.body);
+    if (!result.success) {
+      const customError = result.error.issues.reduce((acc, issue) => {
+        const field = issue.path.join('.');
+
+        if (!acc[field]) {
+          acc[field] = issue.message;
+        }
+
+        return acc;
+      }, {});
+
+      return res.status(400).json({
+        status: 'fail',
+        errors: customError,
+      });
+    }
+
+    req.body = result.data;
+    next();
+  });
+
+export default {
+  validateUpdateSchema,
+};
