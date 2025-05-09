@@ -4,6 +4,7 @@ import connectPgSimple from 'connect-pg-simple';
 import pg from 'pg';
 const { Pool } = pg;
 import morgan from 'morgan';
+import { setErrorMap } from 'zod';
 
 import AppError from './utils/appError.js';
 import errorMiddleware from '../middlewares/errorMiddleware.js';
