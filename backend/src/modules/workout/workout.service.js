@@ -1,5 +1,7 @@
+import { connect } from 'http2';
 import prisma from '../../config/db.js';
 import AppError from '../../utils/appError.js';
+import handleAsync from '../../utils/handleAsync.js';
 
 export const createWorkout = async ({
   userID,
@@ -41,17 +43,29 @@ export const createWorkout = async ({
 
     return newWorkout;
   } catch (e) {
-    console.log(e);
-    throw new AppError(
-      'Error occured while trying to create workout. Try again later.',
-      500,
-    );
+    throw new AppError('Internal Server Error.', 500);
   }
 };
 
 export const getWorkout = async (workoutID, userID) => {
   const workoutRecord = await prisma.workout.findUnique({
     where: { id: workoutID },
+    include: {
+      creator: {
+        select: {
+          id: true,
+          name_surname: true,
+          username: true,
+        },
+      },
+      participants: {
+        select: {
+          id: true,
+          name_surname: true,
+          username: true,
+        },
+      },
+    },
   });
 
   if (!workoutRecord) {
@@ -65,7 +79,133 @@ export const getWorkout = async (workoutID, userID) => {
   return workoutRecord;
 };
 
+export const getAllWorkouts = async () => {
+  try {
+    const workoutRecords = await prisma.workout.findMany({
+      where: { isPublic: true },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name_surname: true,
+            username: true,
+          },
+        },
+        participants: {
+          select: {
+            id: true,
+            name_surname: true,
+            username: true,
+          },
+        },
+      },
+    });
+
+    if (!workoutRecords) {
+      throw new AppError('No workouts found.', 404);
+    }
+
+    return workoutRecords;
+  } catch (e) {
+    throw new AppError('Internal Server Error.', 500);
+  }
+};
+
+export const joinToWorkout = async (userID, workoutID) => {
+  try {
+    const workoutRecord = await prisma.workout.findUnique({
+      where: { id: workoutID },
+    });
+
+    if (!workoutRecord || !workoutRecord.isPublic) {
+      throw new AppError('No workout found.', 404);
+    }
+
+    const updatedWorkout = await prisma.workout.update({
+      where: { id: workoutID },
+      data: {
+        participants: {
+          connect: { id: userID },
+        },
+      },
+    });
+
+    return updatedWorkout;
+  } catch (e) {
+    throw new AppError('Internal server error.', 500);
+  }
+};
+
+export const getAllWorkoutsCreatedByUser = async (userID) => {
+  try {
+    const createdWorkoutRecords = await prisma.workout.findMany({
+      where: { creatorId: userID },
+    });
+
+    if (createdWorkoutRecords.length === 0) {
+      throw new AppError('No workout found.', 404);
+    }
+
+    return createdWorkoutRecords;
+  } catch (e) {
+    if (e instanceof AppError) throw e;
+    throw new AppError('Internal Server Error.', 500);
+  }
+};
+
+export const getAllWorkoutsParticipate = async (userID) => {
+  try {
+    const workoutRecords = await prisma.workout.findMany({
+      where: {
+        participants: {
+          every: { id: userID },
+        },
+      },
+    });
+
+    if (!workoutRecords || workoutRecords.length === 0) {
+      throw new AppError('You dont have any workout you participate.', 404);
+    }
+
+    return workoutRecords;
+  } catch (e) {
+    console.log(e);
+    if (e instanceof AppError) throw e;
+    throw new AppError('Internal server error.', 500);
+  }
+};
+
+export const updateWorkout = async (userID, workoutID, data) => {
+  const workoutRecord = await prisma.workout.findFirst({
+    where: {
+      id: workoutID,
+      creatorId: userID,
+    },
+  });
+
+  if (!workoutRecord) {
+    throw new AppError('No workout found.', 404);
+  }
+
+  try {
+    const updatedWorkout = await prisma.workout.update({
+      where: { id: workoutID },
+      data,
+    });
+
+    return updatedWorkout;
+  } catch (e) {
+    console.log(e);
+    throw new AppError('Internal server error.', 500);
+  }
+};
+
 export default {
   createWorkout,
   getWorkout,
+  getAllWorkouts,
+  joinToWorkout,
+  updateWorkout,
+  getAllWorkoutsCreatedByUser,
+  getAllWorkoutsParticipate,
 };
