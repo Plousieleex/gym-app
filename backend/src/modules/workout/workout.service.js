@@ -200,12 +200,37 @@ export const updateWorkout = async (userID, workoutID, data) => {
   }
 };
 
+export const deleteWorkout = async (userID, workoutID) => {
+  const workoutRecord = await prisma.workout.findFirst({
+    where: {
+      id: workoutID,
+      creatorId: userID,
+    },
+  });
+
+  if (!workoutRecord) {
+    throw new AppError('No workout found.', 404);
+  }
+
+  try {
+    await prisma.workout.delete({
+      where: {
+        id: workoutID,
+        creatorId: userID,
+      },
+    });
+  } catch (e) {
+    throw new AppError('Internal Server Error.', 500);
+  }
+};
+
 export default {
   createWorkout,
   getWorkout,
   getAllWorkouts,
   joinToWorkout,
   updateWorkout,
+  deleteWorkout,
   getAllWorkoutsCreatedByUser,
   getAllWorkoutsParticipate,
 };

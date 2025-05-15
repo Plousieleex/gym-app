@@ -100,6 +100,15 @@ export const updateWorkout = handleAsync(async (req, res, next) => {
 
 export const deleteWorkout = handleAsync(async (req, res, next) => {
   // Delete Workout
+  const userID = req.user.id;
+  const workoutID = Number(req.params.id);
+
+  await workoutService.deleteWorkout(userID, workoutID);
+
+  res.status(200).json({
+    status: 'success',
+    data: null,
+  });
 });
 
 export const joinToWorkout = handleAsync(async (req, res, next) => {

@@ -47,7 +47,7 @@ app.use(
 // Routes
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/auth', authRouter);
-app.use('/api/v1/workout', workoutRouter);
+app.use('/api/v1/workouts', workoutRouter);
 
 // Unhandled Route
 app.all('*', (req, res, next) => {

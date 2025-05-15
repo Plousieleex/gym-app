@@ -3,7 +3,6 @@ import authService from './auth.service.js';
 import _ from 'lodash';
 
 export const signUpAuthController = handleAsync(async (req, res, next) => {
-  console.log(req.body);
   const newUser = await authService.signUpAuthService({
     name_surname: req.body.name_surname,
     email: req.body.email,
@@ -61,7 +60,7 @@ export const sendSixDigitTokenToEmail = handleAsync(async (req, res, next) => {
     message: 'Login code sent.',
   });
 });
-
+//fix
 export const checkSixDigitTokenForLoginController = handleAsync(
   async (req, res, next) => {
     const sixDigitToken = req.body.token;

@@ -6,34 +6,33 @@ import workoutValidationSchemas from './workout.validation.js';
 
 const router = Router();
 
-router.route('/').post(authMiddleware.protect, workoutController.createWorkout);
-
 router
-  .route('/workouts')
+  .route('/')
+  .post(authMiddleware.protect, workoutController.createWorkout)
   .get(authMiddleware.protect, workoutController.getAllWorkouts);
 
 router
-  .route('/workouts/creator')
+  .route('/workouts?creator=true')
   .get(authMiddleware.protect, workoutController.getAllWorkoutsCreatedByUser);
 
 router
-  .route('/workouts/participate')
+  .route('/workouts?participating=true')
   .get(authMiddleware.protect, workoutController.getAllWorkoutsParticipate);
 
-router.route('/:id').get(authMiddleware.protect, workoutController.getWorkout);
-
 router
-  .route('/:id/join')
-  .post(authMiddleware.protect, workoutController.joinToWorkout);
-
-router
-  .route('/:id/update')
+  .route('/:id')
+  .get(authMiddleware.protect, workoutController.getWorkout)
   .patch(
     authMiddleware.protect,
     workoutMiddleware.validateUpdateSchema(
       workoutValidationSchemas.updateWorkoutSchema,
     ),
     workoutController.updateWorkout,
-  );
+  )
+  .delete(authMiddleware.protect, workoutController.deleteWorkout);
+
+router
+  .route('/:id/join')
+  .post(authMiddleware.protect, workoutController.joinToWorkout);
 
 export default router;
